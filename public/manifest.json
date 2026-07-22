@@ -1,0 +1,9 @@
+{
+  "name": "Athlete OS",
+  "short_name": "AthleteOS",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121C17",
+  "theme_color": "#121C17",
+  "icons": []
+}
