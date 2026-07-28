@@ -18,6 +18,7 @@ Copy-paste your way through this, in order. Total time: ~20-30 minutes.
 1. Go to supabase.com → sign up → **New project**. Pick any name/region, set a database password (save it somewhere).
 2. Once it's created, go to the **SQL Editor** (left sidebar) → **New query**.
 3. Open `supabase.sql` from this project, copy the whole file, paste it in, click **Run**.
+4. Then do the same with `supabase-v2.sql` (adds programs, match scorecards, niggle tracking, sleep/RPE columns). If you already had v1 running, just run `supabase-v2.sql` on its own — it is safe on an existing database.
 4. Go to **Project Settings → API**. You'll need three values from this page in step 3 below:
    - `Project URL`
    - `anon public` key

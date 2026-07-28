@@ -1,0 +1,69 @@
+'use client';
+import { useEffect, useRef, useState } from 'react';
+
+export function Card({ children, className = '' }) {
+  return (
+    <div className={`bg-paper text-ink rounded-b-xl rounded-tr-xl border border-white/10 p-5 mb-4 shadow-lg shadow-black/20 ${className}`}>
+      {children}
+    </div>
+  );
+}
+export function Eyebrow({ children }) {
+  return <span className="block font-mono text-[10px] uppercase tracking-wider text-seam mb-1.5">{children}</span>;
+}
+export function Empty({ children }) {
+  return <div className="text-inkMuted text-sm font-serif italic py-2">{children}</div>;
+}
+export function H2({ children }) {
+  return <h2 className="font-display font-bold text-3xl leading-none">{children}</h2>;
+}
+export function Sub({ children }) {
+  return <p className="font-serif italic text-inkMuted text-sm mb-2 mt-1">{children}</p>;
+}
+
+export function FlipTile({ value, caption, size = 'text-2xl' }) {
+  const [flipping, setFlipping] = useState(false);
+  const prevValue = useRef(value);
+  useEffect(() => {
+    if (prevValue.current !== value) {
+      setFlipping(true);
+      const t = setTimeout(() => setFlipping(false), 400);
+      prevValue.current = value;
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+  return (
+    <div className={`flip-tile px-2 py-2.5 text-center ${flipping ? 'is-flipping' : ''}`}>
+      <div className={`digit ${size}`}>{value}</div>
+      <div className="caption text-[8px] mt-0.5">{caption}</div>
+    </div>
+  );
+}
+
+/* tiny dependency-free sparkline for trends */
+export function Sparkline({ points, height = 42, stroke = '#AE3529' }) {
+  const vals = points.filter((p) => p != null && !isNaN(p));
+  if (vals.length < 2) return <div className="text-inkMuted text-xs font-serif italic">Not enough data yet.</div>;
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const range = max - min || 1;
+  const w = 100;
+  const step = w / (points.length - 1);
+  let d = '';
+  points.forEach((p, i) => {
+    if (p == null || isNaN(p)) return;
+    const x = i * step;
+    const y = height - 4 - ((p - min) / range) * (height - 8);
+    d += (d ? ' L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+  });
+  return (
+    <svg viewBox={`0 0 ${w} ${height}`} className="w-full" style={{ height }}>
+      <path d={d} fill="none" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export const inputCls = 'w-full bg-white border border-ink/15 rounded-lg px-3 py-2.5 text-ink text-base font-body';
+export const labelCls = 'block font-mono text-[10px] uppercase tracking-wide text-inkMuted mt-2.5 mb-1';
+export const btnCls = 'bg-seam text-paper font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
+export const btnSecondary = 'bg-transparent border border-ink/20 text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
+export const btnGold = 'bg-willow text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
