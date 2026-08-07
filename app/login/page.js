@@ -1,15 +1,30 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState('signin');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [refCode, setRefCode] = useState('');
+
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) { setRefCode(ref); setMode('signup'); }
+  }, [searchParams]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -20,7 +35,10 @@ export default function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({
+          email, password,
+          options: refCode ? { data: { referred_by_code: refCode } } : undefined
+        });
         if (error) throw error;
       }
       router.push('/');
@@ -43,6 +61,7 @@ export default function LoginPage() {
           <p className="font-serif italic text-inkMuted text-sm mb-5">
             {mode === 'signin' ? 'Sign in to your scorecard.' : 'Start your own scorecard.'}
           </p>
+          {refCode && <p className="font-mono text-[11px] text-seam mb-3">Invited via code {refCode} — you'll both get credit once you're set up.</p>}
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block font-mono text-[10px] uppercase tracking-wide text-inkMuted mb-1">Email</label>

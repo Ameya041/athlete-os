@@ -21,6 +21,7 @@ Copy-paste your way through this, in order. Total time: ~20-30 minutes.
 4. Then do the same with `supabase-v2.sql` (adds programs, match scorecards, niggle tracking, sleep/RPE columns). If you already had v1 running, just run `supabase-v2.sql` on its own — it is safe on an existing database.
 5. Then run `supabase-v3.sql` the same way — adds the onboarding fitness-assessment fields and the help-tour flag. Required for this version of the code to work; the app will error on sign-up/onboarding without it.
 6. Then run `supabase-v4.sql` — adds profile bio/avatar/socials, friends, the activity feed, photo attachments, and push notification storage. Also required for this version.
+7. Then run `supabase-v5.sql` — adds usernames, safe friend search, the referral/points system, and coach video tips on the feed. Also required.
 
 ## Push notification reminders (optional but free)
 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Card, Eyebrow, Empty, H2, Sub, FlipTile, inputCls, labelCls, btnCls, btnSecondary, btnGold } from './ui';
-import { Mail, LogOut, HelpCircle, Instagram, Link2, Camera, UserPlus, Check, X as XIcon, Bell, BellOff } from 'lucide-react';
+import { Mail, LogOut, HelpCircle, Instagram, Link2, Camera, UserPlus, Check, X as XIcon, Bell, BellOff, Search, Gift, Copy, Video } from 'lucide-react';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -14,17 +14,23 @@ function urlBase64ToUint8Array(base64String) {
 const SUPPORT_EMAIL = 'support@athleteos.app'; // placeholder — swap for your real inbox once you have one
 
 export default function Profile({ session, profile, setProfile, recentDays, recentMatches, streak, bestStreak,
-  friends, incomingRequests, onAddFriend, onRespondFriend, onSignOut, onReopenHelp, onOpenFeed }) {
+  friends, incomingRequests, onAddFriend, onRespondFriend, onSignOut, onReopenHelp, onOpenFeed, showToast }) {
   const [editing, setEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [friendEmail, setFriendEmail] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [usernameError, setUsernameError] = useState('');
   const [form, setForm] = useState({
     display_name: profile.display_name || '',
+    username: profile.username || '',
     bio: profile.bio || '',
     instagram_handle: profile.instagram_handle || '',
     other_social_url: profile.other_social_url || '',
+    phone: profile.phone || '',
     primary_role: profile.primary_role || 'all-rounder',
-    experience_years: profile.experience_years || ''
+    experience_years: profile.experience_years || '',
+    is_coach: profile.is_coach || false
   });
   const [busy, setBusy] = useState(false);
   const [notifStatus, setNotifStatus] = useState('unknown'); // unknown | unsupported | denied | off | on
@@ -109,15 +115,36 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
 
   async function saveProfile() {
     setBusy(true);
+    setUsernameError('');
     const patch = {
       display_name: form.display_name, bio: form.bio,
       instagram_handle: form.instagram_handle.replace('@', ''), other_social_url: form.other_social_url,
-      primary_role: form.primary_role, experience_years: Number(form.experience_years) || null
+      phone: form.phone, primary_role: form.primary_role, experience_years: Number(form.experience_years) || null,
+      is_coach: form.is_coach
     };
-    await supabase.from('profiles').update(patch).eq('id', session.user.id);
+    if (form.username) patch.username = form.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const { error } = await supabase.from('profiles').update(patch).eq('id', session.user.id);
+    if (error) {
+      if (error.message?.includes('unique') || error.code === '23505') setUsernameError('That username is already taken.');
+      setBusy(false);
+      return;
+    }
     setProfile({ ...profile, ...patch });
     setBusy(false);
     setEditing(false);
+  }
+
+  async function runSearch(q) {
+    setSearchQuery(q);
+    if (q.trim().length < 2) { setSearchResults([]); return; }
+    const { data } = await supabase.rpc('search_users', { query: q.trim() });
+    setSearchResults(data || []);
+  }
+
+  function copyReferralLink() {
+    const link = `${window.location.origin}/login?ref=${profile.referral_code}`;
+    navigator.clipboard.writeText(link);
+    showToast?.('Invite link copied ✓');
   }
 
   const name = profile.display_name || session.user.email.split('@')[0];
@@ -129,7 +156,8 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
         <div className="bg-ink px-5 pt-6 pb-14 relative">
           <div className="font-mono text-[9px] uppercase tracking-widest text-willow">Player card</div>
           <div className="font-display text-2xl text-paper mt-1">{name}</div>
-          <div className="font-serif italic text-paper/60 text-sm">{profile.primary_role || 'all-rounder'}{profile.experience_years ? ` · ${profile.experience_years} yrs` : ''}</div>
+          {profile.username && <div className="font-mono text-xs text-willow">@{profile.username}</div>}
+          <div className="font-serif italic text-paper/60 text-sm">{profile.primary_role || 'all-rounder'}{profile.experience_years ? ` · ${profile.experience_years} yrs` : ''}{profile.is_coach ? ' · Coach' : ''}</div>
         </div>
         <div className="flex justify-center -mt-10">
           <div className="relative">
@@ -174,18 +202,27 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
           <>
             <label className={labelCls}>Display name</label>
             <input className={inputCls} value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="What friends see" />
+            <label className={labelCls}>Username</label>
+            <input className={inputCls} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="lowercase, no spaces — how friends find you" />
+            {usernameError && <p className="text-seam text-xs font-mono mt-1">{usernameError}</p>}
             <label className={labelCls}>Bio</label>
             <textarea className={inputCls} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Off-spinner, Bengaluru club cricket, building the base for next season." />
             <label className={labelCls}>Instagram handle</label>
             <input className={inputCls} value={form.instagram_handle} onChange={(e) => setForm({ ...form, instagram_handle: e.target.value })} placeholder="yourhandle (no @ needed)" />
             <label className={labelCls}>Another link (YouTube, X, portfolio...)</label>
             <input className={inputCls} value={form.other_social_url} onChange={(e) => setForm({ ...form, other_social_url: e.target.value })} placeholder="https://..." />
+            <label className={labelCls}>Phone (optional, for friends to find you by)</label>
+            <input className={inputCls} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91..." />
             <label className={labelCls}>Role</label>
             <select className={inputCls} value={form.primary_role} onChange={(e) => setForm({ ...form, primary_role: e.target.value })}>
               {['batter', 'bowler', 'all-rounder', 'wicketkeeper'].map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
             <label className={labelCls}>Years of serious training</label>
             <input type="number" inputMode="numeric" className={inputCls} value={form.experience_years} onChange={(e) => setForm({ ...form, experience_years: e.target.value })} />
+            <label className="flex items-center gap-2 mt-3 font-mono text-xs text-inkMuted">
+              <input type="checkbox" checked={form.is_coach} onChange={(e) => setForm({ ...form, is_coach: e.target.checked })} className="accent-seam w-4 h-4" />
+              I'm a coach — let me post video tips to the Feed
+            </label>
             <div className="grid grid-cols-2 gap-2.5 mt-3">
               <button className={btnCls} onClick={saveProfile} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
               <button className={btnSecondary} onClick={() => setEditing(false)}>Cancel</button>
@@ -195,11 +232,38 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
       </Card>
 
       <Card>
+        <Eyebrow>Invite friends</Eyebrow>
+        <H2>{profile.points || 0} points</H2>
+        <Sub>Share your link. Once someone you invite finishes setting up their account, you both get credit. Points are a tracked ledger for now — once paid plans launch, they'll convert into free subscription time.</Sub>
+        <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2.5">
+          <span className="font-mono text-sm text-ink">{profile.referral_code || '—'}</span>
+          <button onClick={copyReferralLink} className="text-seam flex items-center gap-1 font-mono text-xs"><Copy size={14} /> Copy link</button>
+        </div>
+        <div className="flex items-center gap-2 mt-2 text-inkMuted font-mono text-xs"><Gift size={14} /> 50 points per friend who gets started</div>
+      </Card>
+
+      <Card>
         <Eyebrow>Friends</Eyebrow>
         <H2>Train together</H2>
-        <Sub>Add teammates by their account email. Once accepted, you'll see each other's shared wins on the Feed — not a private inbox, just visible, friendly accountability.</Sub>
-        <div className="flex gap-2">
-          <input className={inputCls} value={friendEmail} onChange={(e) => setFriendEmail(e.target.value)} placeholder="teammate@email.com" />
+        <Sub>Search by username, or add directly by their exact email or phone. Once accepted, you'll see each other's shared wins on the Feed — not a private inbox, just visible, friendly accountability.</Sub>
+
+        <div className="relative">
+          <Search size={14} className="absolute left-3 top-3.5 text-inkMuted" />
+          <input className={`${inputCls} pl-8`} value={searchQuery} onChange={(e) => runSearch(e.target.value)} placeholder="Search by username..." />
+        </div>
+        {searchResults.length > 0 && (
+          <div className="mt-2">
+            {searchResults.map((r) => (
+              <div key={r.id} className="flex justify-between items-center py-1.5 text-sm font-serif">
+                <span>{r.display_name || r.username} <span className="font-mono text-xs text-inkMuted">@{r.username}</span></span>
+                <button onClick={() => { onAddFriend(r.username); setSearchQuery(''); setSearchResults([]); }} className="text-seam"><UserPlus size={16} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 mt-3">
+          <input className={inputCls} value={friendEmail} onChange={(e) => setFriendEmail(e.target.value)} placeholder="or exact email / phone" />
           <button className={btnSecondary} onClick={() => { onAddFriend(friendEmail); setFriendEmail(''); }}><UserPlus size={16} /></button>
         </div>
 
@@ -221,7 +285,7 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
         <div className="mt-3">
           <div className={labelCls}>Your friends ({friends.length})</div>
           {friends.length === 0 ? <Empty>No friends added yet.</Empty> :
-            friends.map((f) => <div key={f.id} className="text-sm font-serif py-1">{f.email}</div>)}
+            friends.map((f) => <div key={f.id} className="text-sm font-serif py-1">{f.display_name || f.username || f.email}</div>)}
         </div>
         <button className={`${btnGold} w-full mt-3`} onClick={onOpenFeed}>Open the Feed</button>
       </Card>

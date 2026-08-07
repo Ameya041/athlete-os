@@ -25,8 +25,7 @@ const TABS = [
   { id: 'nutrition', label: 'Food', icon: Apple, help: 'Your daily calorie and macro targets, and a place to log what you eat.' },
   { id: 'mind', label: 'Mind', icon: Brain, help: 'Mood check-ins and guided meditation, with spoken instructions.' },
   { id: 'history', label: 'History', icon: LineChartIcon, help: 'Graphs of your trends over the last month: weight, training load, sleep, strength, and match stats.' },
-  { id: 'feed', label: 'Feed', icon: Users, help: 'Share wins with friends and cheer each other on — visible posts, not private messaging.' },
-  { id: 'profile', label: 'Profile', icon: User, help: 'Your account, player details, stats summary, friends, and support contact.' }
+  { id: 'feed', label: 'Feed', icon: Users, help: 'Share wins with friends and cheer each other on — visible posts, not private messaging.' }
 ];
 
 export default function App() {
@@ -118,7 +117,7 @@ export default function App() {
     const accepted = (friendRows || []).filter((f) => f.status === 'accepted');
     const incoming = (friendRows || []).filter((f) => f.status === 'pending' && !f.i_am_requester)
       .map((f) => ({ id: f.friendship_id, requester_email: f.email }));
-    setFriends(accepted.map((f) => ({ id: f.other_user_id, email: f.email, display_name: f.display_name })));
+    setFriends(accepted.map((f) => ({ id: f.other_user_id, email: f.email, username: f.username, display_name: f.display_name })));
     setIncomingRequests(incoming);
 
     if (prof?.active_program_id) {
@@ -169,10 +168,18 @@ export default function App() {
     router.push('/login');
   }
 
-  async function addFriend(email) {
-    if (!email.trim()) return;
-    const { data: targetId } = await supabase.rpc('find_user_id_by_email', { lookup_email: email.trim() });
-    if (!targetId) { showToast('No player found with that email'); return; }
+  async function addFriend(identifier) {
+    if (!identifier.trim()) return;
+    let targetId = null;
+    if (identifier.includes('@')) {
+      const { data } = await supabase.rpc('find_user_id_by_email', { lookup_email: identifier.trim() });
+      targetId = data;
+    } else {
+      const { data } = await supabase.rpc('search_users', { query: identifier.trim() });
+      const exact = (data || []).find((u) => u.username?.toLowerCase() === identifier.trim().toLowerCase());
+      targetId = exact?.id || data?.[0]?.id || null;
+    }
+    if (!targetId) { showToast('No player found'); return; }
     if (targetId === session.user.id) { showToast("That's you!"); return; }
     const { error } = await supabase.from('friendships').insert({ user_id: session.user.id, friend_id: targetId, status: 'pending' });
     if (error) showToast('Already sent, or already friends');
@@ -224,28 +231,37 @@ export default function App() {
           <h1 className="font-display font-extrabold text-4xl tracking-tight">
             ATHLETE<span className="text-seam">OS</span>
           </h1>
-          <div className="text-right flex items-start gap-3">
-            <button onClick={() => setHelpOpen(true)} className="w-8 h-8 rounded-full bg-bgElev2 border border-white/10 flex items-center justify-center text-cream" aria-label="How this app works">
+          <div className="text-right flex items-start gap-2.5">
+            <button onClick={() => setHelpOpen(true)} className="w-8 h-8 rounded-full bg-bgElev2 border border-white/10 flex items-center justify-center text-cream flex-none" aria-label="How this app works">
               <HelpCircle size={16} />
+            </button>
+            <button onClick={() => setTab('profile')} className={`w-8 h-8 rounded-full overflow-hidden border flex items-center justify-center flex-none bg-seam/20 ${tab === 'profile' ? 'border-seam border-2' : 'border-white/10'}`} aria-label="Your profile">
+              {profile.avatar_url
+                ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                : <User size={16} className="text-cream" />}
             </button>
             <div className="font-mono text-[11px] text-muted pt-1.5">{fmtDate(iso).toUpperCase()}</div>
           </div>
         </div>
         <div className="seam-rule mt-3" />
-        <div className="flex gap-1 mt-4 overflow-x-auto no-scrollbar">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className={`folder-tab flex-none flex flex-col items-center gap-1 text-[10px] uppercase tracking-wide px-3 py-2.5 rounded-t-lg border border-b-0 whitespace-nowrap ${
-                  tab === t.id ? 'is-active' : 'bg-bgElev2 border-white/10 text-muted'
-                }`}>
-                <Icon size={16} strokeWidth={2} />
-                {t.label}
-              </button>
-            );
-          })}
-          <div className="flex-none w-2" />
+        <div className="relative mt-4">
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  className={`folder-tab flex-none flex flex-col items-center gap-1 text-[10px] uppercase tracking-wide px-3 py-2.5 rounded-t-lg border border-b-0 whitespace-nowrap ${
+                    tab === t.id ? 'is-active' : 'bg-bgElev2 border-white/10 text-muted'
+                  }`}>
+                  <Icon size={16} strokeWidth={2} />
+                  {t.label}
+                </button>
+              );
+            })}
+            <div className="flex-none w-2" />
+          </div>
+          {/* fade hint that more tabs exist off-screen — the scrollbar itself is intentionally hidden, so this replaces it as the visual cue */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-bg to-transparent" />
         </div>
       </div>
 
@@ -285,14 +301,14 @@ export default function App() {
               profile={profile} streak={streak} session={session} />
           )}
           {dayLog && tab === 'feed' && (
-            <Feed session={session} dayLog={dayLog} recentMatches={recentMatches} streak={streak} />
+            <Feed session={session} profile={profile} dayLog={dayLog} recentMatches={recentMatches} streak={streak} />
           )}
           {dayLog && tab === 'profile' && (
             <Profile session={session} profile={profile} setProfile={setProfile} recentDays={recentDays}
               recentMatches={recentMatches} streak={streak} bestStreak={bestStreak}
               friends={friends} incomingRequests={incomingRequests}
               onAddFriend={addFriend} onRespondFriend={respondFriend}
-              onSignOut={signOut} onReopenHelp={() => setHelpOpen(true)} onOpenFeed={() => setTab('feed')} />
+              onSignOut={signOut} onReopenHelp={() => setHelpOpen(true)} onOpenFeed={() => setTab('feed')} showToast={showToast} />
           )}
         </div>
       </main>
