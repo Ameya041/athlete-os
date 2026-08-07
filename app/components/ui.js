@@ -70,13 +70,36 @@ export const btnGold = 'bg-willow text-ink font-semibold rounded-lg py-3 px-4 te
 
 /* Free, built-in browser text-to-speech — no API key, no cost. Used for meditation cues and reading the AI coach review aloud. */
 export function speak(text, opts = {}) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
   window.speechSynthesis.cancel(); // don't let cues overlap
   const utter = new SpeechSynthesisUtterance(text);
   utter.rate = opts.rate || 0.95;
   utter.pitch = opts.pitch || 1;
+  if (opts.onEnd) utter.onend = opts.onEnd;
+  if (opts.onEnd) utter.onerror = opts.onEnd;
   window.speechSynthesis.speak(utter);
+  return utter;
 }
 export function stopSpeaking() {
   if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+/* A read-aloud button that actually toggles to a working Stop control once playback starts — previously
+   there was no way to stop a read-aloud once it began. */
+export function ReadAloudButton({ text, className = '' }) {
+  const [speaking, setSpeaking] = useState(false);
+  function toggle() {
+    if (speaking) {
+      stopSpeaking();
+      setSpeaking(false);
+      return;
+    }
+    setSpeaking(true);
+    speak(text, { onEnd: () => setSpeaking(false) });
+  }
+  return (
+    <button className={`font-mono text-[10px] text-inkMuted underline ${className}`} onClick={toggle}>
+      {speaking ? '⏹ Stop' : '🔊 Read aloud'}
+    </button>
+  );
 }

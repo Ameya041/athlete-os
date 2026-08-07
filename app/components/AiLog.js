@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Card, Eyebrow, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold, speak, stopSpeaking } from './ui';
+import { Card, Eyebrow, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold, speak, ReadAloudButton } from './ui';
 
 async function authedFetch(path, body) {
   const { data: { session: s } } = await supabase.auth.getSession();
@@ -182,7 +182,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
           <div className="bg-white border border-seam/20 rounded-lg p-3 mb-3">
             <div className="font-mono text-[9px] uppercase text-seam mb-1">Athlete OS</div>
             <p className="font-serif text-sm leading-relaxed">{assistantReply}</p>
-            <button className="font-mono text-[10px] text-inkMuted underline mt-1" onClick={() => speak(assistantReply)}>🔊 read aloud</button>
+            <ReadAloudButton text={assistantReply} className="mt-1" />
           </div>
         )}
 
@@ -234,7 +234,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
         {review && (
           <>
             <p className="font-serif text-sm mt-3 whitespace-pre-wrap leading-relaxed">{review}</p>
-            <button className={`${btnSecondary} mt-2 text-xs`} onClick={() => speak(review)}>🔊 Read aloud</button>
+            <ReadAloudButton text={review} className="mt-2" />
           </>
         )}
       </Card>
@@ -250,7 +250,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
         {answer && (
           <>
             <p className="font-serif text-sm mt-3 whitespace-pre-wrap leading-relaxed">{answer}</p>
-            <button className={`${btnSecondary} mt-2 text-xs`} onClick={() => speak(answer)}>🔊 Read aloud</button>
+            <ReadAloudButton text={answer} className="mt-2" />
           </>
         )}
       </Card>

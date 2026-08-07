@@ -1,13 +1,16 @@
 'use client';
 import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Card, Eyebrow, Empty, H2, Sub, inputCls, labelCls, btnCls, btnGold } from './ui';
+import { Card, Eyebrow, Empty, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold } from './ui';
 import { BODY_AREAS, WORSE_AFTER } from '../../lib/program';
+import { Camera } from 'lucide-react';
 
-export default function Body({ dayLog, niggles, recentNiggles, updateDayLog, reload, showToast }) {
+export default function Body({ session, dayLog, niggles, recentNiggles, updateDayLog, reload, showToast }) {
   const [sleepH, setSleepH] = useState(dayLog.sleep_hours ?? '');
   const [sleepQ, setSleepQ] = useState(dayLog.sleep_quality ?? 3);
   const [n, setN] = useState({ area: BODY_AREAS[0], severity: 3, desc: '', worse: 'bowling' });
+  const [photo, setPhoto] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   async function saveSleep() {
     await updateDayLog({ sleep_hours: Number(sleepH) || null, sleep_quality: Number(sleepQ) });
@@ -15,13 +18,25 @@ export default function Body({ dayLog, niggles, recentNiggles, updateDayLog, rel
   }
 
   async function saveNiggle() {
-    await supabase.from('niggle_entries').insert({
-      day_log_id: dayLog.id, body_area: n.area, severity: Number(n.severity),
-      description: n.desc, worse_after: n.worse, source: 'manual'
-    });
-    setN({ area: BODY_AREAS[0], severity: 3, desc: '', worse: 'bowling' });
-    showToast('Logged ✓');
-    reload();
+    setUploading(true);
+    let photo_url = null;
+    try {
+      if (photo) {
+        const path = `${session.user.id}/niggles/${Date.now()}-${photo.name}`;
+        const { error } = await supabase.storage.from('athlete-os-media').upload(path, photo);
+        if (!error) photo_url = supabase.storage.from('athlete-os-media').getPublicUrl(path).data.publicUrl;
+      }
+      await supabase.from('niggle_entries').insert({
+        day_log_id: dayLog.id, body_area: n.area, severity: Number(n.severity),
+        description: n.desc, worse_after: n.worse, photo_url, source: 'manual'
+      });
+      setN({ area: BODY_AREAS[0], severity: 3, desc: '', worse: 'bowling' });
+      setPhoto(null);
+      showToast('Logged ✓');
+      reload();
+    } finally {
+      setUploading(false);
+    }
   }
   async function remove(id) { await supabase.from('niggle_entries').delete().eq('id', id); reload(); }
 
@@ -61,7 +76,12 @@ export default function Body({ dayLog, niggles, recentNiggles, updateDayLog, rel
         </select>
         <label className={labelCls}>Describe it</label>
         <textarea className={inputCls} value={n.desc} onChange={(e) => setN({ ...n, desc: e.target.value })} placeholder="Dull ache low on the right side, eases after stretching..." />
-        <button className={`${btnCls} w-full mt-3`} onClick={saveNiggle}>Log it</button>
+        <label className={labelCls}>Photo — where it hurts, swelling, posture, whatever helps (optional)</label>
+        <label className={`${btnSecondary} w-full flex items-center justify-center gap-2 cursor-pointer`}>
+          <Camera size={16} /> {photo ? photo.name : 'Add a photo'}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+        </label>
+        <button className={`${btnCls} w-full mt-3`} onClick={saveNiggle} disabled={uploading}>{uploading ? 'Saving…' : 'Log it'}</button>
       </Card>
 
       {(recurring.length > 0 || severe) && (
@@ -90,6 +110,7 @@ export default function Body({ dayLog, niggles, recentNiggles, updateDayLog, rel
             </div>
             {x.description && <div>{x.description}</div>}
             {x.worse_after && <div className="font-mono text-xs text-inkMuted">worse after {x.worse_after}</div>}
+            {x.photo_url && <img src={x.photo_url} alt="" className="mt-1.5 rounded-lg max-h-40 object-cover" />}
           </div>
         ))}
       </Card>

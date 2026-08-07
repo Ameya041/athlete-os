@@ -1,6 +1,7 @@
 'use client';
 import { Card, Eyebrow, Empty, H2, Sub, FlipTile, btnSecondary } from './ui';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import ShareCardButton from './ShareCard';
 
 const CHART_COLORS = { seam: '#AE3529', willow: '#C69A3E', good: '#4C7A54' };
 
@@ -22,7 +23,7 @@ function Trend({ data, dataKey, color, unit = '' }) {
   );
 }
 
-export default function History({ recentDays, recentWorkouts, recentMatches }) {
+export default function History({ recentDays, recentWorkouts, recentMatches, profile, streak, session }) {
   // recentDays: oldest -> newest array of day_log rows (up to 28 days)
   function liftByDate(name) {
     const byDate = {};
@@ -121,6 +122,17 @@ export default function History({ recentDays, recentWorkouts, recentMatches }) {
         <div className="mt-3">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Overs bowled: {totalOvers} total</div>
         </div>
+      </Card>
+
+      <Card>
+        <Eyebrow>Show it off</Eyebrow>
+        <Sub>A shareable image of your week — post it, or send it straight to your coach.</Sub>
+        <ShareCardButton data={{
+          name: profile?.display_name || session?.user?.email?.split('@')[0] || 'Player',
+          streak, sessions: recentDays.filter((d) => d.session_rpe != null).length,
+          matches: recentMatches.length, runs: totalRuns, wickets: totalWkts,
+          meditationMin: recentDays.reduce((s, d) => s + (d.meditation_minutes || 0), 0)
+        }} />
       </Card>
 
       <Card>

@@ -2,13 +2,48 @@
 import { useState } from 'react';
 import { Card, Eyebrow, Empty, H2, Sub, FlipTile, btnCls, btnSecondary, labelCls } from './ui';
 import { PREHAB } from '../../lib/program';
+import { TrendingUp, TrendingDown, Minus, Flame } from 'lucide-react';
 
-export default function Dashboard({ dayLog, todayPlan, workout, food, updateDayLog, setTab }) {
+function Delta({ label, today, yesterday, unit = '', goodDirection = 'up' }) {
+  if (today == null || yesterday == null) return null;
+  const diff = Math.round((today - yesterday) * 10) / 10;
+  if (diff === 0) return (
+    <div className="flex items-center justify-between py-1.5 border-b border-ink/10 last:border-0 text-sm font-serif">
+      <span>{label}</span><span className="flex items-center gap-1 text-inkMuted font-mono text-xs"><Minus size={12} /> same as yesterday</span>
+    </div>
+  );
+  const isUp = diff > 0;
+  const good = goodDirection === 'up' ? isUp : !isUp;
+  return (
+    <div className="flex items-center justify-between py-1.5 border-b border-ink/10 last:border-0 text-sm font-serif">
+      <span>{label}</span>
+      <span className={`flex items-center gap-1 font-mono text-xs ${good ? 'text-good' : 'text-seam'}`}>
+        {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />} {isUp ? '+' : ''}{diff}{unit} vs yesterday
+      </span>
+    </div>
+  );
+}
+
+export default function Dashboard({ dayLog, todayPlan, workout, food, updateDayLog, setTab, streak, bestStreak, yesterdayLog }) {
   const kcal = food.reduce((s, f) => s + (f.calories || 0), 0);
   const [readiness, setReadiness] = useState(dayLog.readiness ?? 3);
+  const todayLoad = (dayLog.session_rpe && dayLog.session_minutes) ? dayLog.session_rpe * dayLog.session_minutes : null;
+  const yesterdayLoad = (yesterdayLog?.session_rpe && yesterdayLog?.session_minutes) ? yesterdayLog.session_rpe * yesterdayLog.session_minutes : null;
 
   return (
     <>
+      {streak > 0 && (
+        <Card className="!bg-ink !text-paper flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-seam/20 flex items-center justify-center flex-none"><Flame size={20} className="text-seam" /></div>
+          <div>
+            <div className="font-display text-2xl leading-none">{streak} day{streak === 1 ? '' : 's'}</div>
+            <div className="font-mono text-[10px] text-paper/60 uppercase">
+              {streak >= bestStreak ? "That's your best streak yet" : `Best ever: ${bestStreak} days`}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {dayLog.readiness == null && (
         <Card>
           <Eyebrow>Morning check-in</Eyebrow>
@@ -41,6 +76,17 @@ export default function Dashboard({ dayLog, todayPlan, workout, food, updateDayL
           <FlipTile value={dayLog.readiness ?? '–'} caption="Ready /5" />
         </div>
       </Card>
+
+      {yesterdayLog && (
+        <Card>
+          <Eyebrow>Compared to yesterday</Eyebrow>
+          <H2>Small moves</H2>
+          <Delta label="Morning weight" today={dayLog.morning_weight_kg} yesterday={yesterdayLog.morning_weight_kg} unit="kg" goodDirection="down" />
+          <Delta label="Training load" today={todayLoad} yesterday={yesterdayLoad} goodDirection="up" />
+          <Delta label="Sleep" today={dayLog.sleep_hours} yesterday={yesterdayLog.sleep_hours} unit="h" goodDirection="up" />
+          <Delta label="Readiness" today={dayLog.readiness} yesterday={yesterdayLog.readiness} unit="/5" goodDirection="up" />
+        </Card>
+      )}
 
       <Card>
         <Eyebrow>Daily prehab — before gym / nets</Eyebrow>

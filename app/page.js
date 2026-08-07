@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 import { todayISO, fmtDate, isoDaysAgo, DEFAULT_PROFILE, defaultProgramSeed } from '../lib/program';
 import { Card, Eyebrow, H2, Sub, btnCls, btnGold, btnSecondary, inputCls, labelCls } from './components/ui';
-import { LayoutGrid, Mic, Dumbbell, Trophy, HeartPulse, Apple, Brain, LineChart as LineChartIcon, HelpCircle, X, User } from 'lucide-react';
+import { LayoutGrid, Mic, Dumbbell, Trophy, HeartPulse, Apple, Brain, LineChart as LineChartIcon, HelpCircle, X, User, Users } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import AiLog from './components/AiLog';
 import Train from './components/Train';
@@ -14,6 +14,7 @@ import Nutrition from './components/Nutrition';
 import Mind from './components/Mind';
 import History from './components/History';
 import Profile from './components/Profile';
+import Feed from './components/Feed';
 
 const TABS = [
   { id: 'dashboard', label: 'Today', icon: LayoutGrid, help: 'Your snapshot for today: the plan, your morning readiness, and quick shortcuts.' },
@@ -24,7 +25,8 @@ const TABS = [
   { id: 'nutrition', label: 'Food', icon: Apple, help: 'Your daily calorie and macro targets, and a place to log what you eat.' },
   { id: 'mind', label: 'Mind', icon: Brain, help: 'Mood check-ins and guided meditation, with spoken instructions.' },
   { id: 'history', label: 'History', icon: LineChartIcon, help: 'Graphs of your trends over the last month: weight, training load, sleep, strength, and match stats.' },
-  { id: 'profile', label: 'Profile', icon: User, help: 'Your account, player details, stats summary, and support contact.' }
+  { id: 'feed', label: 'Feed', icon: Users, help: 'Share wins with friends and cheer each other on — visible posts, not private messaging.' },
+  { id: 'profile', label: 'Profile', icon: User, help: 'Your account, player details, stats summary, friends, and support contact.' }
 ];
 
 export default function App() {
@@ -46,6 +48,8 @@ export default function App() {
   const [recentWorkouts, setRecentWorkouts] = useState([]);
   const [recentMatches, setRecentMatches] = useState([]);
   const [recentNiggles, setRecentNiggles] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
   const [toastMsg, setToastMsg] = useState('');
   const iso = todayISO();
 
@@ -110,6 +114,13 @@ export default function App() {
     setRecentMatches(mt28.data || []);
     setRecentNiggles(n14.data || []);
 
+    const { data: friendRows } = await supabase.rpc('get_my_friends');
+    const accepted = (friendRows || []).filter((f) => f.status === 'accepted');
+    const incoming = (friendRows || []).filter((f) => f.status === 'pending' && !f.i_am_requester)
+      .map((f) => ({ id: f.friendship_id, requester_email: f.email }));
+    setFriends(accepted.map((f) => ({ id: f.other_user_id, email: f.email, display_name: f.display_name })));
+    setIncomingRequests(incoming);
+
     if (prof?.active_program_id) {
       const { data: pdays } = await supabase.from('program_days').select('*, program_exercises(*)').eq('program_id', prof.active_program_id).order('day_of_week');
       const progRow = (progs.data || []).find((p) => p.id === prof.active_program_id);
@@ -130,6 +141,21 @@ export default function App() {
     if (profile?.onboarded && profile?.seen_help_tour === false) setHelpOpen(true);
   }, [profile]);
 
+  useEffect(() => {
+    if (!session?.user || !recentDays.length) return;
+    let s = 0;
+    for (let i = recentDays.length - 1; i >= 0; i--) {
+      const d = recentDays[i];
+      const active = d.session_rpe != null || d.meditation_done || d.readiness != null || d.morning_weight_kg != null;
+      if (active) s++; else break;
+    }
+    if (s > 0 && s > (profile.best_streak || 0)) {
+      supabase.from('profiles').update({ best_streak: s }).eq('id', session.user.id).then(() => {
+        setProfile((p) => ({ ...p, best_streak: s }));
+      });
+    }
+  }, [session, recentDays, profile.best_streak]);
+
   if (session === undefined) return <div className="min-h-screen flex items-center justify-center text-muted font-mono text-sm">Loading...</div>;
   if (session === null) return null;
 
@@ -143,10 +169,39 @@ export default function App() {
     router.push('/login');
   }
 
+  async function addFriend(email) {
+    if (!email.trim()) return;
+    const { data: targetId } = await supabase.rpc('find_user_id_by_email', { lookup_email: email.trim() });
+    if (!targetId) { showToast('No player found with that email'); return; }
+    if (targetId === session.user.id) { showToast("That's you!"); return; }
+    const { error } = await supabase.from('friendships').insert({ user_id: session.user.id, friend_id: targetId, status: 'pending' });
+    if (error) showToast('Already sent, or already friends');
+    else showToast('Friend request sent ✓');
+    loadEverything();
+  }
+
+  async function respondFriend(friendshipId, accept) {
+    if (accept) await supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
+    else await supabase.from('friendships').delete().eq('id', friendshipId);
+    loadEverything();
+  }
+
   // today's plan from the active program
   const todayDow = new Date().getDay();
   const todayPlan = activeProgram?.days?.find((d) => d.day_of_week === todayDow) || null;
   const todayExercises = todayPlan?.exercises || [];
+
+  // current streak: consecutive days (ending today) with any real activity logged
+  let streak = 0;
+  for (let i = recentDays.length - 1; i >= 0; i--) {
+    const d = recentDays[i];
+    const active = d.session_rpe != null || d.meditation_done || d.readiness != null || d.morning_weight_kg != null;
+    if (active) streak++; else break;
+  }
+  const bestStreak = Math.max(profile.best_streak || 0, streak);
+
+  // yesterday vs today, for small motivating deltas on the dashboard
+  const yesterdayLog = recentDays.find((d) => d.log_date === isoDaysAgo(1)) || null;
 
   // bowling overs this week vs last week (from matches + practice notes overs field in match_entries only for accuracy)
   function oversInRange(fromDaysAgo, toDaysAgo) {
@@ -199,7 +254,8 @@ export default function App() {
       <main className="px-4">
         <div key={tab} className="view-enter">
           {dayLog && tab === 'dashboard' && (
-            <Dashboard dayLog={dayLog} todayPlan={todayPlan} workout={workout} food={food} updateDayLog={updateDayLog} setTab={setTab} />
+            <Dashboard dayLog={dayLog} todayPlan={todayPlan} workout={workout} food={food} updateDayLog={updateDayLog}
+              setTab={setTab} streak={streak} bestStreak={bestStreak} yesterdayLog={yesterdayLog} />
           )}
           {dayLog && tab === 'ailog' && (
             <AiLog dayLog={dayLog} session={session} recentDays={recentDays} reload={loadEverything} showToast={showToast} />
@@ -210,11 +266,11 @@ export default function App() {
               reload={loadEverything} showToast={showToast} updateDayLog={updateDayLog} />
           )}
           {dayLog && tab === 'cricket' && (
-            <Cricket dayLog={dayLog} cricket={cricket} matches={matches} weekOvers={weekOvers}
+            <Cricket session={session} dayLog={dayLog} cricket={cricket} matches={matches} weekOvers={weekOvers}
               prevWeekOvers={prevWeekOvers} reload={loadEverything} showToast={showToast} />
           )}
           {dayLog && tab === 'body' && (
-            <Body dayLog={dayLog} niggles={niggles} recentNiggles={recentNiggles}
+            <Body session={session} dayLog={dayLog} niggles={niggles} recentNiggles={recentNiggles}
               updateDayLog={updateDayLog} reload={loadEverything} showToast={showToast} />
           )}
           {dayLog && tab === 'nutrition' && (
@@ -225,12 +281,18 @@ export default function App() {
             <Mind dayLog={dayLog} mindset={mindset} updateDayLog={updateDayLog} reload={loadEverything} showToast={showToast} />
           )}
           {dayLog && tab === 'history' && (
-            <History recentDays={recentDays} recentWorkouts={recentWorkouts} recentMatches={recentMatches} />
+            <History recentDays={recentDays} recentWorkouts={recentWorkouts} recentMatches={recentMatches}
+              profile={profile} streak={streak} session={session} />
+          )}
+          {dayLog && tab === 'feed' && (
+            <Feed session={session} dayLog={dayLog} recentMatches={recentMatches} streak={streak} />
           )}
           {dayLog && tab === 'profile' && (
             <Profile session={session} profile={profile} setProfile={setProfile} recentDays={recentDays}
-              recentMatches={recentMatches} cricket={cricket} workout={workout}
-              onSignOut={signOut} onReopenHelp={() => setHelpOpen(true)} />
+              recentMatches={recentMatches} streak={streak} bestStreak={bestStreak}
+              friends={friends} incomingRequests={incomingRequests}
+              onAddFriend={addFriend} onRespondFriend={respondFriend}
+              onSignOut={signOut} onReopenHelp={() => setHelpOpen(true)} onOpenFeed={() => setTab('feed')} />
           )}
         </div>
       </main>

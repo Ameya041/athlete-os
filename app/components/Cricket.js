@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Card, Eyebrow, Empty, H2, Sub, FlipTile, inputCls, labelCls, btnCls, btnSecondary } from './ui';
+import { Camera } from 'lucide-react';
 
-export default function Cricket({ dayLog, cricket, matches, weekOvers, prevWeekOvers, reload, showToast }) {
+export default function Cricket({ session, dayLog, cricket, matches, weekOvers, prevWeekOvers, reload, showToast }) {
   const [mode, setMode] = useState('practice');
   return (
     <>
@@ -26,23 +27,37 @@ export default function Cricket({ dayLog, cricket, matches, weekOvers, prevWeekO
       </div>
 
       {mode === 'practice'
-        ? <PracticeForm dayLog={dayLog} cricket={cricket} reload={reload} showToast={showToast} />
+        ? <PracticeForm session={session} dayLog={dayLog} cricket={cricket} reload={reload} showToast={showToast} />
         : <MatchForm dayLog={dayLog} matches={matches} reload={reload} showToast={showToast} />}
     </>
   );
 }
 
-function PracticeForm({ dayLog, cricket, reload, showToast }) {
+function PracticeForm({ session, dayLog, cricket, reload, showToast }) {
   const [form, setForm] = useState({ bat: '', bowl: '', field: '', overs: '', rate: 3, focus: '' });
+  const [photo, setPhoto] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   async function save() {
-    await supabase.from('cricket_entries').insert({
-      day_log_id: dayLog.id, session_type: 'practice', batting_notes: form.bat, bowling_notes: form.bowl + (form.overs ? ` (${form.overs} overs)` : ''),
-      fielding_notes: form.field, rating: Number(form.rate), improvement_focus: form.focus, source: 'manual'
-    });
-    showToast('Session saved ✓');
-    setForm({ bat: '', bowl: '', field: '', overs: '', rate: 3, focus: '' });
-    reload();
+    setUploading(true);
+    let photo_url = null;
+    try {
+      if (photo) {
+        const path = `${session.user.id}/cricket/${Date.now()}-${photo.name}`;
+        const { error } = await supabase.storage.from('athlete-os-media').upload(path, photo);
+        if (!error) photo_url = supabase.storage.from('athlete-os-media').getPublicUrl(path).data.publicUrl;
+      }
+      await supabase.from('cricket_entries').insert({
+        day_log_id: dayLog.id, session_type: 'practice', batting_notes: form.bat, bowling_notes: form.bowl + (form.overs ? ` (${form.overs} overs)` : ''),
+        fielding_notes: form.field, rating: Number(form.rate), improvement_focus: form.focus, photo_url, source: 'manual'
+      });
+      showToast('Session saved ✓');
+      setForm({ bat: '', bowl: '', field: '', overs: '', rate: 3, focus: '' });
+      setPhoto(null);
+      reload();
+    } finally {
+      setUploading(false);
+    }
   }
   async function remove(id) { await supabase.from('cricket_entries').delete().eq('id', id); reload(); }
 
@@ -63,7 +78,12 @@ function PracticeForm({ dayLog, cricket, reload, showToast }) {
         <input type="range" min="1" max="5" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} className="w-full accent-seam" />
         <label className={labelCls}>One thing to improve</label>
         <input className={inputCls} value={form.focus} onChange={(e) => setForm({ ...form, focus: e.target.value })} />
-        <button className={`${btnCls} w-full mt-3`} onClick={save}>Save session</button>
+        <label className={labelCls}>Technique photo — grip, stance, follow-through (optional)</label>
+        <label className={`${btnSecondary} w-full flex items-center justify-center gap-2 cursor-pointer`}>
+          <Camera size={16} /> {photo ? photo.name : 'Add a photo'}
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => setPhoto(e.target.files?.[0] || null)} />
+        </label>
+        <button className={`${btnCls} w-full mt-3`} onClick={save} disabled={uploading}>{uploading ? 'Saving…' : 'Save session'}</button>
       </Card>
 
       <Card>
@@ -74,6 +94,7 @@ function PracticeForm({ dayLog, cricket, reload, showToast }) {
             {c.batting_notes && <div>Batting: {c.batting_notes}</div>}
             {c.bowling_notes && <div>Bowling: {c.bowling_notes}</div>}
             {c.fielding_notes && <div>Fielding: {c.fielding_notes}</div>}
+            {c.photo_url && <img src={c.photo_url} alt="" className="mt-1.5 rounded-lg max-h-40 object-cover" />}
             <div className="font-mono text-xs text-inkMuted">Rating {c.rating || '–'}/5 {c.improvement_focus ? `· Focus: ${c.improvement_focus}` : ''}</div>
           </div>
         ))}

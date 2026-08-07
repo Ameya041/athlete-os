@@ -20,6 +20,14 @@ Copy-paste your way through this, in order. Total time: ~20-30 minutes.
 3. Open `supabase.sql` from this project, copy the whole file, paste it in, click **Run**.
 4. Then do the same with `supabase-v2.sql` (adds programs, match scorecards, niggle tracking, sleep/RPE columns). If you already had v1 running, just run `supabase-v2.sql` on its own — it is safe on an existing database.
 5. Then run `supabase-v3.sql` the same way — adds the onboarding fitness-assessment fields and the help-tour flag. Required for this version of the code to work; the app will error on sign-up/onboarding without it.
+6. Then run `supabase-v4.sql` — adds profile bio/avatar/socials, friends, the activity feed, photo attachments, and push notification storage. Also required for this version.
+
+## Push notification reminders (optional but free)
+
+1. In the project folder, run `npm install` then `npx web-push generate-vapid-keys`. Copy the two keys it prints.
+2. Add three env vars in Vercel (Project Settings → Environment Variables): `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (from step 1), and `CRON_SECRET` (any long random string you make up yourself).
+3. That's it — `vercel.json` already schedules a daily check at 15:00 UTC (20:30 IST) that nudges anyone who hasn't logged anything that day. Vercel's free Hobby tier supports one cron job a day at no cost.
+4. Each player turns reminders on individually from their Profile tab — it's opt-in per person, not automatic.
 4. Go to **Project Settings → API**. You'll need three values from this page in step 3 below:
    - `Project URL`
    - `anon public` key
