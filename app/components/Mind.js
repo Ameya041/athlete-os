@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Card, Eyebrow, Empty, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold } from './ui';
+import { Card, Eyebrow, Empty, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold, speak, stopSpeaking } from './ui';
 import { MEDITATIONS } from '../../lib/program';
 
 export default function Mind({ dayLog, mindset, updateDayLog, reload, showToast }) {
@@ -81,16 +81,28 @@ function Meditate({ dayLog, updateDayLog, showToast }) {
   const [running, setRunning] = useState(false);
   const [label, setLabel] = useState('');
   const [phase, setPhase] = useState('Ready');
+  const [voiceOn, setVoiceOn] = useState(true);
   const ringRef = useRef(null);
   const timerRef = useRef(null);
   const secondsRef = useRef(0);
+  const promptTimerRef = useRef(null);
+
+  const GUIDANCE = {
+    breath: 'Breathing reset. Find a comfortable seat, relax your shoulders. We will breathe in for four seconds, hold for four, and breathe out for six. Starting now.',
+    bodyscan: 'Body scan. Close your eyes if that feels right. We will move your attention slowly from your feet up to your head, releasing tension at each point. Start by noticing your feet.',
+    matchprep: 'Match visualization. Picture yourself walking out to bat, or marking your run up. See it clearly, feel calm and ready. Take a slow breath, and begin.',
+    stillness: 'Open stillness. No technique needed. Just sit, eyes closed. When your mind wanders, gently bring it back to your breath.'
+  };
+  const BODY_SCAN_PROMPTS = ['Notice your feet and legs, let them soften.', 'Bring attention to your stomach and lower back, let go of any gripping.', 'Notice your shoulders and chest, let them drop.', 'Relax your jaw and your forehead. Just breathe.'];
 
   function breathCycle() {
     setPhase('Inhale');
+    if (voiceOn) speak('Inhale');
     if (ringRef.current) ringRef.current.style.transform = 'scale(1.15)';
-    setTimeout(() => setPhase('Hold'), 4000);
+    setTimeout(() => { setPhase('Hold'); if (voiceOn) speak('Hold'); }, 4000);
     setTimeout(() => {
       setPhase('Exhale');
+      if (voiceOn) speak('Exhale');
       if (ringRef.current) ringRef.current.style.transform = 'scale(1)';
     }, 8000);
   }
@@ -99,7 +111,18 @@ function Meditate({ dayLog, updateDayLog, showToast }) {
     stop();
     secondsRef.current = duration * 60;
     setRunning(true);
-    if (med.id === 'breath') breathCycle(); else setPhase(med.name);
+    if (voiceOn) speak(GUIDANCE[med.id]);
+    if (med.id === 'breath') setTimeout(breathCycle, voiceOn ? 5500 : 0);
+    else setPhase(med.name);
+
+    if (med.id === 'bodyscan' && voiceOn) {
+      let i = 0;
+      const step = Math.max(20, Math.floor((duration * 60) / (BODY_SCAN_PROMPTS.length + 1)));
+      promptTimerRef.current = setInterval(() => {
+        if (i < BODY_SCAN_PROMPTS.length) { speak(BODY_SCAN_PROMPTS[i]); i++; }
+      }, step * 1000);
+    }
+
     timerRef.current = setInterval(() => {
       secondsRef.current -= 1;
       if (med.id === 'breath' && secondsRef.current % 14 === 0) breathCycle();
@@ -109,11 +132,17 @@ function Meditate({ dayLog, updateDayLog, showToast }) {
       if (secondsRef.current <= 0) {
         stop();
         setPhase('Done');
+        if (voiceOn) speak('Well done. Take a moment before you move on.');
         finish();
       }
     }, 1000);
   }
-  function stop() { clearInterval(timerRef.current); setRunning(false); }
+  function stop() {
+    clearInterval(timerRef.current);
+    clearInterval(promptTimerRef.current);
+    setRunning(false);
+    stopSpeaking();
+  }
 
   async function finish() {
     const total = (dayLog.meditation_minutes || 0) + duration;
@@ -143,6 +172,10 @@ function Meditate({ dayLog, updateDayLog, showToast }) {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2 mt-3 font-mono text-xs text-inkMuted">
+          <input type="checkbox" checked={voiceOn} onChange={(e) => setVoiceOn(e.target.checked)} className="accent-seam w-4 h-4" />
+          Spoken guidance (free, uses your device's voice)
+        </label>
       </Card>
 
       <Card className="text-center">

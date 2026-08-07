@@ -67,3 +67,16 @@ export const labelCls = 'block font-mono text-[10px] uppercase tracking-wide tex
 export const btnCls = 'bg-seam text-paper font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
 export const btnSecondary = 'bg-transparent border border-ink/20 text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
 export const btnGold = 'bg-willow text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
+
+/* Free, built-in browser text-to-speech — no API key, no cost. Used for meditation cues and reading the AI coach review aloud. */
+export function speak(text, opts = {}) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel(); // don't let cues overlap
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = opts.rate || 0.95;
+  utter.pitch = opts.pitch || 1;
+  window.speechSynthesis.speak(utter);
+}
+export function stopSpeaking() {
+  if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+}

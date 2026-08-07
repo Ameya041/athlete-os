@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Card, Eyebrow, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold } from './ui';
+import { Card, Eyebrow, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold, speak, stopSpeaking } from './ui';
 
 async function authedFetch(path, body) {
   const { data: { session: s } } = await supabase.auth.getSession();
@@ -186,7 +186,12 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
         <button className={`${btnGold} w-full`} onClick={getReview} disabled={reviewLoading}>
           {reviewLoading ? 'Thinking…' : 'Review my day'}
         </button>
-        {review && <p className="font-serif text-sm mt-3 whitespace-pre-wrap leading-relaxed">{review}</p>}
+        {review && (
+          <>
+            <p className="font-serif text-sm mt-3 whitespace-pre-wrap leading-relaxed">{review}</p>
+            <button className={`${btnSecondary} mt-2 text-xs`} onClick={() => speak(review)}>🔊 Read aloud</button>
+          </>
+        )}
       </Card>
 
       <Card>
@@ -197,7 +202,12 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
         <button className={`${btnSecondary} w-full mt-2`} onClick={ask} disabled={qaLoading}>
           {qaLoading ? 'Thinking…' : 'Ask'}
         </button>
-        {answer && <p className="font-serif text-sm mt-3 whitespace-pre-wrap leading-relaxed">{answer}</p>}
+        {answer && (
+          <>
+            <p className="font-serif text-sm mt-3 whitespace-pre-wrap leading-relaxed">{answer}</p>
+            <button className={`${btnSecondary} mt-2 text-xs`} onClick={() => speak(answer)}>🔊 Read aloud</button>
+          </>
+        )}
       </Card>
     </>
   );
