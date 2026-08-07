@@ -1,31 +1,60 @@
 'use client';
-import { Card, Eyebrow, Empty, H2, Sub, Sparkline, FlipTile, btnSecondary } from './ui';
+import { Card, Eyebrow, Empty, H2, Sub, FlipTile, btnSecondary } from './ui';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+
+const CHART_COLORS = { seam: '#AE3529', willow: '#C69A3E', good: '#4C7A54' };
+
+function Trend({ data, dataKey, color, unit = '' }) {
+  const clean = data.filter((d) => d[dataKey] != null);
+  if (clean.length < 2) return <div className="text-inkMuted text-xs font-serif italic py-2">Not enough data yet — keep logging daily.</div>;
+  return (
+    <ResponsiveContainer width="100%" height={140}>
+      <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#20202015" vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} width={30} />
+        <Tooltip
+          contentStyle={{ background: '#F4EFE1', border: '1px solid #20202020', borderRadius: 8, fontFamily: 'Inter', fontSize: 12 }}
+          formatter={(v) => [`${v}${unit}`, '']} labelStyle={{ fontFamily: 'JetBrains Mono', fontSize: 10 }} />
+        <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={{ r: 2 }} connectNulls />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
 
 export default function History({ recentDays, recentWorkouts, recentMatches }) {
   // recentDays: oldest -> newest array of day_log rows (up to 28 days)
-  const weights = recentDays.map((d) => d.morning_weight_kg);
-  const loads = recentDays.map((d) => (d.session_rpe && d.session_minutes) ? d.session_rpe * d.session_minutes : null);
-  const sleep = recentDays.map((d) => d.sleep_hours);
-
-  // per-exercise best weight per day for the big three
-  function liftTrend(name) {
+  function liftByDate(name) {
     const byDate = {};
     recentWorkouts.forEach((w) => {
       if (!w.exercise?.toLowerCase().includes(name) || !w.weight_kg) return;
       const day = w.created_at?.slice(0, 10);
       byDate[day] = Math.max(byDate[day] || 0, Number(w.weight_kg));
     });
-    return recentDays.map((d) => byDate[d.log_date] ?? null);
+    return byDate;
   }
+  const squatByDate = liftByDate('squat');
+  const deadByDate = liftByDate('deadlift');
+  const benchByDate = liftByDate('bench');
 
-  const squat = liftTrend('squat');
-  const dead = liftTrend('deadlift');
-  const bench = liftTrend('bench');
+  const chartData = recentDays.map((d) => {
+    const dt = new Date(d.log_date + 'T00:00:00');
+    return {
+      label: dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+      weight: d.morning_weight_kg ?? null,
+      load: (d.session_rpe && d.session_minutes) ? d.session_rpe * d.session_minutes : null,
+      sleep: d.sleep_hours ?? null,
+      squat: squatByDate[d.log_date] ?? null,
+      deadlift: deadByDate[d.log_date] ?? null,
+      bench: benchByDate[d.log_date] ?? null
+    };
+  });
 
   const totalRuns = recentMatches.reduce((s, m) => s + (m.runs || 0), 0);
   const totalWkts = recentMatches.reduce((s, m) => s + (m.wickets || 0), 0);
   const dismissed = recentMatches.filter((m) => m.dismissal && !/not out/i.test(m.dismissal)).length;
   const avg = dismissed ? (totalRuns / dismissed).toFixed(1) : totalRuns > 0 ? 'NO' : '–';
+  const totalOvers = Math.round(recentMatches.reduce((s, m) => s + (Number(m.overs_bowled) || 0), 0) * 10) / 10;
 
   function exportCSV() {
     const header = 'date,weight_kg,readiness,sleep_hours,sleep_quality,session_rpe,session_minutes,training_load,meditation_minutes\n';
@@ -53,15 +82,15 @@ export default function History({ recentDays, recentWorkouts, recentMatches }) {
 
         <div className="mt-3">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Morning weight (kg)</div>
-          <Sparkline points={weights} />
+          <Trend data={chartData} dataKey="weight" color={CHART_COLORS.seam} unit="kg" />
         </div>
         <div className="mt-4">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Training load (RPE × minutes)</div>
-          <Sparkline points={loads} stroke="#C69A3E" />
+          <Trend data={chartData} dataKey="load" color={CHART_COLORS.willow} />
         </div>
         <div className="mt-4">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Sleep hours</div>
-          <Sparkline points={sleep} stroke="#4C7A54" />
+          <Trend data={chartData} dataKey="sleep" color={CHART_COLORS.good} unit="h" />
         </div>
       </Card>
 
@@ -69,15 +98,15 @@ export default function History({ recentDays, recentWorkouts, recentMatches }) {
         <Eyebrow>Strength progression — heaviest set per day</Eyebrow>
         <div className="mt-1">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Squat</div>
-          <Sparkline points={squat} />
+          <Trend data={chartData} dataKey="squat" color={CHART_COLORS.seam} unit="kg" />
         </div>
         <div className="mt-4">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Deadlift</div>
-          <Sparkline points={dead} />
+          <Trend data={chartData} dataKey="deadlift" color={CHART_COLORS.willow} unit="kg" />
         </div>
         <div className="mt-4">
           <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Bench press</div>
-          <Sparkline points={bench} />
+          <Trend data={chartData} dataKey="bench" color={CHART_COLORS.good} unit="kg" />
         </div>
       </Card>
 
@@ -88,6 +117,9 @@ export default function History({ recentDays, recentWorkouts, recentMatches }) {
           <FlipTile value={totalRuns} caption="Runs" />
           <FlipTile value={avg} caption="Average" />
           <FlipTile value={totalWkts} caption="Wickets" />
+        </div>
+        <div className="mt-3">
+          <div className="font-mono text-[10px] uppercase text-inkMuted mb-1">Overs bowled: {totalOvers} total</div>
         </div>
       </Card>
 

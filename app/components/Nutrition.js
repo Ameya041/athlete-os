@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Card, Eyebrow, Empty, H2, Sub, inputCls, labelCls, btnCls, btnSecondary, btnGold } from './ui';
 import { computeMacros } from '../../lib/program';
+import { BarChart, Bar as RBar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Nutrition({ dayLog, food, profile, setProfile, userId, updateDayLog, reload, showToast }) {
   const macros = computeMacros(profile);
@@ -15,7 +16,7 @@ export default function Nutrition({ dayLog, food, profile, setProfile, userId, u
   const [weightInput, setWeightInput] = useState(dayLog.morning_weight_kg ?? '');
   const [profileForm, setProfileForm] = useState(profile);
 
-  function Bar({ label, val, target, unit }) {
+  function ProgressBar({ label, val, target, unit }) {
     const pct = target ? Math.min(100, (val / target) * 100) : 0;
     return (
       <div className="mt-2.5">
@@ -52,10 +53,28 @@ export default function Nutrition({ dayLog, food, profile, setProfile, userId, u
         <Eyebrow>Daily targets</Eyebrow>
         <H2>{macros.target} kcal / day</H2>
         <Sub>TDEE {macros.tdee} kcal {profile.surplus >= 0 ? '+' : ''}{profile.surplus} adjustment.</Sub>
-        <Bar label="Calories" val={totals.calories} target={macros.target} unit="" />
-        <Bar label="Protein" val={totals.protein} target={macros.protein} unit="g" />
-        <Bar label="Carbs" val={totals.carbs} target={macros.carbs} unit="g" />
-        <Bar label="Fat" val={totals.fat} target={macros.fat} unit="g" />
+
+        <ResponsiveContainer width="100%" height={140}>
+          <BarChart
+            data={[
+              { name: 'Protein', actual: Math.round(totals.protein), target: macros.protein },
+              { name: 'Carbs', actual: Math.round(totals.carbs), target: macros.carbs },
+              { name: 'Fat', actual: Math.round(totals.fat), target: macros.fat }
+            ]}
+            margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+            <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} width={30} />
+            <Tooltip contentStyle={{ background: '#F4EFE1', border: '1px solid #20202020', borderRadius: 8, fontFamily: 'Inter', fontSize: 12 }} />
+            <RBar dataKey="target" fill="#20202015" radius={[4, 4, 0, 0]} />
+            <RBar dataKey="actual" fill="#AE3529" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="font-mono text-[9px] text-inkMuted text-center -mt-2 mb-1">solid = today so far · faint = target</div>
+
+        <ProgressBar label="Calories" val={totals.calories} target={macros.target} unit="" />
+        <ProgressBar label="Protein" val={totals.protein} target={macros.protein} unit="g" />
+        <ProgressBar label="Carbs" val={totals.carbs} target={macros.carbs} unit="g" />
+        <ProgressBar label="Fat" val={totals.fat} target={macros.fat} unit="g" />
       </Card>
 
       <Card>

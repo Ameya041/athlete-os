@@ -19,6 +19,7 @@ Copy-paste your way through this, in order. Total time: ~20-30 minutes.
 2. Once it's created, go to the **SQL Editor** (left sidebar) → **New query**.
 3. Open `supabase.sql` from this project, copy the whole file, paste it in, click **Run**.
 4. Then do the same with `supabase-v2.sql` (adds programs, match scorecards, niggle tracking, sleep/RPE columns). If you already had v1 running, just run `supabase-v2.sql` on its own — it is safe on an existing database.
+5. Then run `supabase-v3.sql` the same way — adds the onboarding fitness-assessment fields and the help-tour flag. Required for this version of the code to work; the app will error on sign-up/onboarding without it.
 4. Go to **Project Settings → API**. You'll need three values from this page in step 3 below:
    - `Project URL`
    - `anon public` key
@@ -68,6 +69,14 @@ git push -u origin main
 1. Open the Vercel URL → **Sign up** with your own email/password (this is your personal login, stored securely in Supabase — nobody else can see your data, enforced by the database rules in `supabase.sql`).
 2. On your phone, open the same URL in Chrome/Safari → tap the browser menu → **Add to Home Screen**. It now behaves like an installed app with its own icon, no App Store needed.
 3. Same login works on your laptop — same data, always in sync, since it all lives in Supabase rather than on either device.
+
+## Testing with a group (e.g. 10 friends)
+
+Supabase's free-tier database itself has no "5 users" limit. What actually blocks signups past the first few is the **built-in email sender**, which only sends 2 emails/hour project-wide and only to addresses on your own Supabase team — everyone else's confirmation email silently fails.
+
+**For a closed beta with people you know:** Supabase Dashboard → **Authentication → Providers → Email** → turn **off "Confirm email."** Testers can sign up and get straight in, no email step at all.
+
+**Before opening this to strangers:** turn "Confirm email" back on and set up free custom SMTP instead, under **Authentication → Emails → SMTP Settings** — Resend's free tier (3,000 emails/month) is a good option and takes about 15 minutes to wire up.
 
 ## Updating the app later
 
