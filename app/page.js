@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../lib/supabaseClient';
 import { todayISO, fmtDate, isoDaysAgo, DEFAULT_PROFILE, defaultProgramSeed } from '../lib/program';
 import { Card, Eyebrow, H2, Sub, btnCls, btnGold, btnSecondary, inputCls, labelCls } from './components/ui';
-import { LayoutGrid, Mic, Dumbbell, Trophy, HeartPulse, Apple, Brain, LineChart as LineChartIcon, HelpCircle, X } from 'lucide-react';
+import { LayoutGrid, Mic, Dumbbell, Trophy, HeartPulse, Apple, Brain, LineChart as LineChartIcon, HelpCircle, X, User } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import AiLog from './components/AiLog';
 import Train from './components/Train';
@@ -13,6 +13,7 @@ import Body from './components/Body';
 import Nutrition from './components/Nutrition';
 import Mind from './components/Mind';
 import History from './components/History';
+import Profile from './components/Profile';
 
 const TABS = [
   { id: 'dashboard', label: 'Today', icon: LayoutGrid, help: 'Your snapshot for today: the plan, your morning readiness, and quick shortcuts.' },
@@ -22,7 +23,8 @@ const TABS = [
   { id: 'body', label: 'Body', icon: HeartPulse, help: 'Track sleep and any pain or niggles — early, before they become injuries.' },
   { id: 'nutrition', label: 'Food', icon: Apple, help: 'Your daily calorie and macro targets, and a place to log what you eat.' },
   { id: 'mind', label: 'Mind', icon: Brain, help: 'Mood check-ins and guided meditation, with spoken instructions.' },
-  { id: 'history', label: 'History', icon: LineChartIcon, help: 'Graphs of your trends over the last month: weight, training load, sleep, strength, and match stats.' }
+  { id: 'history', label: 'History', icon: LineChartIcon, help: 'Graphs of your trends over the last month: weight, training load, sleep, strength, and match stats.' },
+  { id: 'profile', label: 'Profile', icon: User, help: 'Your account, player details, stats summary, and support contact.' }
 ];
 
 export default function App() {
@@ -171,10 +173,7 @@ export default function App() {
             <button onClick={() => setHelpOpen(true)} className="w-8 h-8 rounded-full bg-bgElev2 border border-white/10 flex items-center justify-center text-cream" aria-label="How this app works">
               <HelpCircle size={16} />
             </button>
-            <div>
-              <div className="font-mono text-[11px] text-muted">{fmtDate(iso).toUpperCase()}</div>
-              <button onClick={signOut} className="font-mono text-[10px] text-muted underline">sign out</button>
-            </div>
+            <div className="font-mono text-[11px] text-muted pt-1.5">{fmtDate(iso).toUpperCase()}</div>
           </div>
         </div>
         <div className="seam-rule mt-3" />
@@ -191,6 +190,7 @@ export default function App() {
               </button>
             );
           })}
+          <div className="flex-none w-2" />
         </div>
       </div>
 
@@ -226,6 +226,11 @@ export default function App() {
           )}
           {dayLog && tab === 'history' && (
             <History recentDays={recentDays} recentWorkouts={recentWorkouts} recentMatches={recentMatches} />
+          )}
+          {dayLog && tab === 'profile' && (
+            <Profile session={session} profile={profile} setProfile={setProfile} recentDays={recentDays}
+              recentMatches={recentMatches} cricket={cricket} workout={workout}
+              onSignOut={signOut} onReopenHelp={() => setHelpOpen(true)} />
           )}
         </div>
       </main>

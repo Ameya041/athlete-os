@@ -15,11 +15,21 @@ async function authedFetch(path, body) {
   return json;
 }
 
+const PROMPT_TEMPLATE = `Training: I did ___ (gym / nets / conditioning) for ___ minutes, it felt like ___/10 effort.
+Cricket: I batted for ___ / bowled ___ overs / fielded. It went ___.
+Food: I had ___ for breakfast/lunch/dinner.
+Sleep: I slept ___ hours, felt ___.
+Body: ___ feels sore/tight, especially after ___. (leave blank if nothing)
+Mood: I'm feeling ___/10 about things right now.`;
+
 export default function AiLog({ dayLog, session, recentDays, reload, showToast }) {
   const [text, setText] = useState('');
   const [status, setStatus] = useState('');
   const [parsed, setParsed] = useState(null);
+  const [assistantReply, setAssistantReply] = useState('');
+  const [conversation, setConversation] = useState([]); // {role, content} turns for this entry
   const [recording, setRecording] = useState(false);
+  const [showTemplate, setShowTemplate] = useState(false);
   const [review, setReview] = useState('');
   const [reviewLoading, setReviewLoading] = useState(false);
   const [question, setQuestion] = useState('');
@@ -46,13 +56,17 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
 
   async function parseIt() {
     if (!text.trim()) { showToast('Say or type something first'); return; }
-    setStatus('Parsing...');
+    setStatus('Thinking...');
+    const myText = text;
     try {
-      const json = await authedFetch('/api/ai-log', { text });
+      const json = await authedFetch('/api/ai-log', { text: myText, history: conversation });
       setParsed(json.parsed);
+      setAssistantReply(json.parsed?.assistantReply || '');
+      setConversation((prev) => [...prev, { role: 'user', content: myText }, { role: 'assistant', content: json.raw || JSON.stringify(json.parsed) }]);
+      setText('');
       setStatus('');
     } catch (e) {
-      setStatus('Could not parse — check connection and try again.');
+      setStatus('Could not reach the AI — check your connection and try again.');
     }
   }
 
@@ -106,9 +120,13 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
     if (Object.keys(dayPatch).length) inserts.push(supabase.from('day_logs').update(dayPatch).eq('id', dayLog.id));
 
     await Promise.all(inserts);
-    setText(''); setParsed(null);
+    setParsed(null); setAssistantReply(''); setConversation([]);
     showToast('Logged ✓');
     reload();
+  }
+
+  function discard() {
+    setParsed(null); setAssistantReply(''); setConversation([]); setText('');
   }
 
   async function getReview() {
@@ -141,7 +159,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
   const previewSections = parsed ? [
     parsed.workout?.length && ['Workout', parsed.workout.map((w) => `${w.exercise} — ${w.setsReps || ''} ${w.weightKg ? w.weightKg + 'kg' : ''}`)],
     parsed.sessionRpe && ['Session effort', [`RPE ${parsed.sessionRpe}/10${parsed.sessionMinutes ? ` · ${parsed.sessionMinutes} min` : ''}`]],
-    parsed.nutrition?.length && ['Nutrition', parsed.nutrition.map((f) => `${f.item} — ${f.calories ?? '?'} kcal`)],
+    parsed.nutrition?.length && ['Nutrition', parsed.nutrition.map((f) => `${f.item} — ${f.calories ?? '?'} kcal${f.estimated ? ' (estimated)' : ''}`)],
     (parsed.sleep?.hours || parsed.sleep?.quality) && ['Sleep', [`${parsed.sleep.hours ?? '?'}h · quality ${parsed.sleep.quality ?? '?'}/5`]],
     parsed.cricket?.sessionType !== 'none' && ['Cricket', [parsed.cricket.battingNotes, parsed.cricket.bowlingNotes, parsed.cricket.fieldingNotes, parsed.cricket.oversBowled ? `${parsed.cricket.oversBowled} overs bowled` : ''].filter(Boolean)],
     parsed.match?.played && ['Match', [`vs ${parsed.match.opponent || '?'} · ${parsed.match.runs ?? '-'}(${parsed.match.balls ?? '-'})${parsed.match.wickets != null ? ` · ${parsed.match.wickets}w` : ''}`]],
@@ -153,29 +171,56 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
     <>
       <Card>
         <Eyebrow>Speak or type your day</Eyebrow>
-        <H2>Tell me what happened</H2>
-        <Sub>Everything at once is fine: nets, gym, food, sleep, overs bowled, any pain, mood. I will sort it.</Sub>
+        <H2>{conversation.length ? 'Anything to add or correct?' : 'Tell me what happened'}</H2>
+        <Sub>
+          {conversation.length
+            ? 'Reply below — I\u2019ll fold it into the same entry.'
+            : 'Everything at once is fine: nets, gym, food, sleep, overs bowled, any pain, mood. I\u2019ll ask if anything needs clarifying.'}
+        </Sub>
+
+        {assistantReply && (
+          <div className="bg-white border border-seam/20 rounded-lg p-3 mb-3">
+            <div className="font-mono text-[9px] uppercase text-seam mb-1">Athlete OS</div>
+            <p className="font-serif text-sm leading-relaxed">{assistantReply}</p>
+            <button className="font-mono text-[10px] text-inkMuted underline mt-1" onClick={() => speak(assistantReply)}>🔊 read aloud</button>
+          </div>
+        )}
+
         <div className="flex gap-2 items-start">
-          <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Type here, or tap the mic..." className={`${inputCls} min-h-[90px]`} />
+          <textarea value={text} onChange={(e) => setText(e.target.value)}
+            placeholder={conversation.length ? 'Type your answer...' : 'Type here, or tap the mic...'}
+            className={`${inputCls} min-h-[80px]`} />
           <button onClick={toggleMic}
             className={`flex-none w-12 h-12 rounded-full border border-ink/15 flex items-center justify-center text-lg ${recording ? 'mic-rec' : 'bg-white'}`}>🎙</button>
         </div>
-        <button className={`${btnCls} w-full mt-3`} onClick={parseIt}>Parse & preview</button>
+        <button className={`${btnCls} w-full mt-3`} onClick={parseIt}>{conversation.length ? 'Send' : 'Parse & preview'}</button>
         {status && <p className="text-inkMuted text-xs mt-2 font-serif">{status}</p>}
+
+        {!conversation.length && (
+          <button className="font-mono text-[10px] text-inkMuted underline mt-3" onClick={() => setShowTemplate((s) => !s)}>
+            {showTemplate ? 'Hide example' : 'Not sure what to say? See an example'}
+          </button>
+        )}
+        {showTemplate && (
+          <pre className="mt-2 bg-white/60 rounded-lg p-3 font-serif text-xs whitespace-pre-wrap leading-relaxed text-inkMuted">{PROMPT_TEMPLATE}</pre>
+        )}
       </Card>
 
       {parsed && (
         <Card>
-          <Eyebrow>Preview — save when ready</Eyebrow>
-          <H2>Parsed entry</H2>
-          {previewSections.length === 0 && <Sub>Nothing structured detected in that note.</Sub>}
+          <Eyebrow>Ready to save?</Eyebrow>
+          <H2>Here's what I've got</H2>
+          {previewSections.length === 0 && <Sub>Nothing structured detected yet — reply above with more detail.</Sub>}
           {previewSections.map(([title, lines]) => (
             <div key={title} className="mb-2">
               <div className={labelCls}>{title}</div>
               {lines.map((l, i) => <div key={i} className="text-sm py-1 border-b border-ink/10 font-serif">{l}</div>)}
             </div>
           ))}
-          <button className={`${btnCls} w-full mt-2`} onClick={commit}>Save all to today</button>
+          <div className="grid grid-cols-2 gap-2.5 mt-2">
+            <button className={btnCls} onClick={commit}>Save all to today</button>
+            <button className={btnSecondary} onClick={discard}>Discard</button>
+          </div>
         </Card>
       )}
 
