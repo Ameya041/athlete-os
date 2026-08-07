@@ -179,7 +179,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
         </Sub>
 
         {assistantReply && (
-          <div className="bg-white border border-seam/20 rounded-lg p-3 mb-3">
+          <div className="bg-paperDim border border-seam/20 rounded-lg p-3 mb-3">
             <div className="font-mono text-[9px] uppercase text-seam mb-1">Athlete OS</div>
             <p className="font-serif text-sm leading-relaxed">{assistantReply}</p>
             <ReadAloudButton text={assistantReply} className="mt-1" />
@@ -191,7 +191,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
             placeholder={conversation.length ? 'Type your answer...' : 'Type here, or tap the mic...'}
             className={`${inputCls} min-h-[80px]`} />
           <button onClick={toggleMic}
-            className={`flex-none w-12 h-12 rounded-full border border-ink/15 flex items-center justify-center text-lg ${recording ? 'mic-rec' : 'bg-white'}`}>🎙</button>
+            className={`flex-none w-12 h-12 rounded-full border border-ink/15 flex items-center justify-center text-lg ${recording ? 'mic-rec' : 'bg-paperDim'}`}>🎙</button>
         </div>
         <button className={`${btnCls} w-full mt-3`} onClick={parseIt}>{conversation.length ? 'Send' : 'Parse & preview'}</button>
         {status && <p className="text-inkMuted text-xs mt-2 font-serif">{status}</p>}
@@ -202,7 +202,7 @@ export default function AiLog({ dayLog, session, recentDays, reload, showToast }
           </button>
         )}
         {showTemplate && (
-          <pre className="mt-2 bg-white/60 rounded-lg p-3 font-serif text-xs whitespace-pre-wrap leading-relaxed text-inkMuted">{PROMPT_TEMPLATE}</pre>
+          <pre className="mt-2 bg-paperDim rounded-lg p-3 text-xs whitespace-pre-wrap leading-relaxed text-inkMuted">{PROMPT_TEMPLATE}</pre>
         )}
       </Card>
 

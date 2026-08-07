@@ -77,7 +77,7 @@ function LoginForm() {
                 className="w-full bg-white border border-ink/15 rounded-lg px-3 py-2 text-ink text-sm"
               />
             </div>
-            {error && <p className="text-seam text-xs font-mono">{error}</p>}
+            {error && <p className="text-alert text-xs font-mono">{error}</p>}
             <button
               type="submit" disabled={loading}
               className="w-full bg-seam text-paper font-semibold rounded-lg py-3 mt-2 disabled:opacity-60"

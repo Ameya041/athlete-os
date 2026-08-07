@@ -59,7 +59,7 @@ function CheckIn({ dayLog, mindset, reload, showToast, setView }) {
           <div key={m.id} className="py-2 border-b border-ink/10 last:border-0 text-sm font-serif">
             <div className="flex justify-between">
               <span>Mood {m.mood ?? '–'}/10 · Confidence {m.confidence ?? '–'}/10</span>
-              <span className="font-mono text-xs text-seam" onClick={() => remove(m.id)}>remove</span>
+              <span className="font-mono text-xs text-alert" onClick={() => remove(m.id)}>remove</span>
             </div>
             {m.notes && <div>{m.notes}</div>}
             {m.insight && <div className="text-seam italic mt-1">{m.insight}</div>}
@@ -158,7 +158,7 @@ function Meditate({ dayLog, updateDayLog, showToast }) {
         {MEDITATIONS.map((m) => (
           <div key={m.id}
             onClick={() => { setMed(m); setDuration(m.durations[0]); }}
-            className={`py-2.5 px-3 rounded-lg mb-2 border cursor-pointer ${med.id === m.id ? 'border-seam bg-white' : 'border-ink/10 bg-white/50'}`}>
+            className={`py-2.5 px-3 rounded-lg mb-2 border cursor-pointer ${med.id === m.id ? 'border-seam bg-seam/10' : 'border-white/10 bg-paperDim/60'}`}>
             <div className="font-semibold text-sm">{m.name}</div>
             <div className="font-serif italic text-inkMuted text-xs">{m.desc}</div>
           </div>
@@ -167,7 +167,7 @@ function Meditate({ dayLog, updateDayLog, showToast }) {
         <div className="flex gap-2">
           {med.durations.map((d) => (
             <button key={d} onClick={() => setDuration(d)}
-              className={`flex-1 rounded-lg py-2.5 font-display font-bold text-lg border ${duration === d ? 'bg-seam text-paper border-seam' : 'bg-white border-ink/15'}`}>
+              className={`flex-1 rounded-lg py-2.5 font-display font-bold text-lg border ${duration === d ? 'bg-seam text-bg border-seam' : 'bg-paperDim border-white/10'}`}>
               {d}m
             </button>
           ))}

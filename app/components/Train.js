@@ -69,9 +69,9 @@ function TodaySession({ dayLog, todayPlan, todayExercises, workout, reload, show
               {ex.target && <div className="font-mono text-xs text-inkMuted">{ex.target}</div>}
             </div>
             <div className="flex gap-1.5">
-              <input type="number" placeholder="kg" inputMode="decimal" className="w-16 bg-white border border-ink/15 rounded-lg text-center py-2 font-mono text-sm"
+              <input type="number" placeholder="kg" inputMode="decimal" className="w-16 bg-paperDim border border-white/10 rounded-lg text-center py-2 font-mono text-sm"
                 onChange={(e) => setVals((v) => ({ ...v, [`w_${i}`]: e.target.value }))} />
-              <input type="number" placeholder="reps" inputMode="numeric" className="w-16 bg-white border border-ink/15 rounded-lg text-center py-2 font-mono text-sm"
+              <input type="number" placeholder="reps" inputMode="numeric" className="w-16 bg-paperDim border border-white/10 rounded-lg text-center py-2 font-mono text-sm"
                 onChange={(e) => setVals((v) => ({ ...v, [`r_${i}`]: e.target.value }))} />
             </div>
           </div>
@@ -104,7 +104,7 @@ function TodaySession({ dayLog, todayPlan, todayExercises, workout, reload, show
           <div key={w.id} className="py-2 border-b border-ink/10 last:border-0 text-sm font-serif">
             <div className="flex justify-between">
               <b>{w.exercise}</b>
-              <span className="font-mono text-xs text-seam" onClick={() => removeEntry(w.id)}>remove</span>
+              <span className="font-mono text-xs text-alert" onClick={() => removeEntry(w.id)}>remove</span>
             </div>
             <div className="font-mono text-xs text-inkMuted">{w.sets_reps} {w.weight_kg ? `· ${w.weight_kg}kg` : ''} {w.source === 'ai' ? '· via AI log' : ''}</div>
           </div>
@@ -199,7 +199,7 @@ function ProgramBuilder({ programs, activeProgram, userId, reload, showToast }) 
             </div>
             <div className="flex gap-2">
               {activeProgram?.id !== p.id && <button className="font-mono text-xs underline" onClick={() => activate(p.id)}>activate</button>}
-              <button className="font-mono text-xs text-seam underline" onClick={() => deleteProgram(p.id)}>delete</button>
+              <button className="font-mono text-xs text-alert underline" onClick={() => deleteProgram(p.id)}>delete</button>
             </div>
           </div>
         ))}
@@ -236,7 +236,7 @@ function ProgramBuilder({ programs, activeProgram, userId, reload, showToast }) 
                 </div>
 
                 {isEditing && (
-                  <div className="mt-2 bg-white/60 rounded-lg p-3">
+                  <div className="mt-2 bg-paperDim/60 rounded-lg p-3">
                     <label className={labelCls}>Title</label>
                     <input className={inputCls} value={dayForm.title} onChange={(e) => setDayForm({ ...dayForm, title: e.target.value })} placeholder="e.g. Heavy lower body" />
                     <label className={labelCls}>Subtitle</label>
@@ -253,7 +253,7 @@ function ProgramBuilder({ programs, activeProgram, userId, reload, showToast }) 
                         {(day.exercises || []).map((ex) => (
                           <div key={ex.id} className="flex justify-between text-sm py-1 border-b border-ink/10">
                             <span>{ex.name} <span className="font-mono text-xs text-inkMuted">{ex.target}</span></span>
-                            <span className="font-mono text-xs text-seam" onClick={() => removeExercise(ex.id)}>remove</span>
+                            <span className="font-mono text-xs text-alert" onClick={() => removeExercise(ex.id)}>remove</span>
                           </div>
                         ))}
                         <div className="grid grid-cols-2 gap-2 mt-2">

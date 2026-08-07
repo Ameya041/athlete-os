@@ -115,7 +115,7 @@ export default function Feed({ session, profile, dayLog, recentMatches, streak }
             )}
             <div className="flex gap-4 mt-2">
               <button onClick={() => toggleLike(p)} className={`flex items-center gap-1 text-xs font-mono ${p.liked_by_me ? 'text-seam' : 'text-inkMuted'}`}>
-                <Heart size={14} fill={p.liked_by_me ? '#AE3529' : 'none'} /> {p.like_count}
+                <Heart size={14} fill={p.liked_by_me ? '#22C55E' : 'none'} /> {p.like_count}
               </button>
               <button onClick={() => openThread(p.id)} className="flex items-center gap-1 text-xs font-mono text-inkMuted">
                 <MessageCircle size={14} /> {p.comment_count}

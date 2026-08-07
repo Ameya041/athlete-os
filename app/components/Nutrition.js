@@ -62,11 +62,11 @@ export default function Nutrition({ dayLog, food, profile, setProfile, userId, u
               { name: 'Fat', actual: Math.round(totals.fat), target: macros.fat }
             ]}
             margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-            <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} width={30} />
-            <Tooltip contentStyle={{ background: '#F4EFE1', border: '1px solid #20202020', borderRadius: 8, fontFamily: 'Inter', fontSize: 12 }} />
-            <RBar dataKey="target" fill="#20202015" radius={[4, 4, 0, 0]} />
-            <RBar dataKey="actual" fill="#AE3529" radius={[4, 4, 0, 0]} />
+            <XAxis dataKey="name" tick={{ fontSize: 10, fontFamily: 'JetBrains Mono', fill: '#7C897B' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7C897B' }} axisLine={false} tickLine={false} width={30} />
+            <Tooltip contentStyle={{ background: '#171D15', border: '1px solid #F1F4EF1A', color: '#F1F4EF', borderRadius: 8, fontFamily: 'Inter', fontSize: 12 }} />
+            <RBar dataKey="target" fill="#F1F4EF15" radius={[4, 4, 0, 0]} />
+            <RBar dataKey="actual" fill="#22C55E" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
         <div className="font-mono text-[9px] text-inkMuted text-center -mt-2 mb-1">solid = today so far · faint = target</div>
@@ -95,7 +95,7 @@ export default function Nutrition({ dayLog, food, profile, setProfile, userId, u
         <Eyebrow>Today&apos;s food log</Eyebrow>
         {food.length === 0 ? <Empty>Nothing logged yet.</Empty> : food.map((f) => (
           <div key={f.id} className="py-2 border-b border-ink/10 last:border-0 text-sm font-serif">
-            <div className="flex justify-between"><span>{f.item}</span><span className="font-mono text-xs text-seam" onClick={() => removeFood(f.id)}>remove</span></div>
+            <div className="flex justify-between"><span>{f.item}</span><span className="font-mono text-xs text-alert" onClick={() => removeFood(f.id)}>remove</span></div>
             <div className="font-mono text-xs text-inkMuted">{f.calories ?? '?'} kcal · P{f.protein_g ?? '–'} C{f.carbs_g ?? '–'} F{f.fat_g ?? '–'}</div>
           </div>
         ))}

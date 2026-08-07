@@ -8,7 +8,7 @@ export function generateShareCard({ name, streak, sessions, matches, runs, wicke
   const ctx = canvas.getContext('2d');
 
   // turf background with a faint pitch-line texture
-  ctx.fillStyle = '#10241C';
+  ctx.fillStyle = '#0A0F0C';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = 'rgba(244,239,225,0.04)';
   for (let y = 40; y < canvas.height; y += 42) {
@@ -16,19 +16,19 @@ export function generateShareCard({ name, streak, sessions, matches, runs, wicke
   }
 
   // header
-  ctx.fillStyle = '#F1ECDE';
+  ctx.fillStyle = '#F1F4EF';
   ctx.font = '800 64px "Arial Black", sans-serif';
   ctx.fillText('ATHLETE', 60, 130);
-  ctx.fillStyle = '#AE3529';
+  ctx.fillStyle = '#22C55E';
   ctx.fillText('OS', 340, 130);
 
-  ctx.fillStyle = '#93A69B';
+  ctx.fillStyle = '#7C897B';
   ctx.font = '28px monospace';
   ctx.fillText(`${name}'s week`, 60, 175);
 
   // paper card
   const pad = 60, cardY = 230, cardH = 900;
-  ctx.fillStyle = '#F4EFE1';
+  ctx.fillStyle = '#12170F';
   roundRect(ctx, pad, cardY, canvas.width - pad * 2, cardH, 24); ctx.fill();
 
   const stats = [
@@ -41,16 +41,16 @@ export function generateShareCard({ name, streak, sessions, matches, runs, wicke
   ];
   let y = cardY + 100;
   stats.forEach(([label, val], i) => {
-    ctx.fillStyle = '#7A6F5C';
+    ctx.fillStyle = '#8B978A';
     ctx.font = '24px monospace';
     ctx.fillText(label, pad + 60, y);
-    ctx.fillStyle = '#202D26';
+    ctx.fillStyle = '#F1F4EF';
     ctx.font = '800 72px "Arial Black", sans-serif';
     ctx.fillText(val, pad + 60, y + 80);
     y += 140;
   });
 
-  ctx.fillStyle = '#AE3529';
+  ctx.fillStyle = '#22C55E';
   ctx.font = '600 26px monospace';
   ctx.fillText('ATHLETEOS.APP', pad + 60, cardY + cardH - 40);
 

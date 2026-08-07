@@ -432,7 +432,7 @@ function Onboarding({ profile, setProfile, userId, reload }) {
               { v: 0, t: 'Stay as I am', d: 'Eat at maintenance' },
               { v: -300, t: 'Trim down', d: 'Eat slightly below maintenance' }].map((g) => (
               <div key={g.v} onClick={() => setGoal(g.v)}
-                className={`py-3 px-3 rounded-lg mb-2 border cursor-pointer ${goal === g.v ? 'border-seam bg-white' : 'border-ink/10 bg-white/50'}`}>
+                className={`py-3 px-3 rounded-lg mb-2 border cursor-pointer ${goal === g.v ? 'border-seam bg-seam/10' : 'border-white/10 bg-paperDim/60'}`}>
                 <div className="font-semibold text-sm">{g.t}</div>
                 <div className="font-serif italic text-inkMuted text-xs">{g.d}</div>
               </div>
@@ -471,11 +471,11 @@ function Onboarding({ profile, setProfile, userId, reload }) {
             <H2>Your training week</H2>
             <Sub>Start with a proven cricket S&C template (2 strength, 1 power, 2 conditioning days) — or start blank and enter the plan your coach gave you. Either way you can edit every day and every exercise later.</Sub>
             <div onClick={() => setWantTemplate(true)}
-              className={`py-3 px-3 rounded-lg mb-2 border cursor-pointer ${wantTemplate ? 'border-seam bg-white' : 'border-ink/10 bg-white/50'}`}>
+              className={`py-3 px-3 rounded-lg mb-2 border cursor-pointer ${wantTemplate ? 'border-seam bg-seam/10' : 'border-white/10 bg-paperDim/60'}`}>
               <div className="font-semibold text-sm">Use the starter template</div>
             </div>
             <div onClick={() => setWantTemplate(false)}
-              className={`py-3 px-3 rounded-lg mb-2 border cursor-pointer ${!wantTemplate ? 'border-seam bg-white' : 'border-ink/10 bg-white/50'}`}>
+              className={`py-3 px-3 rounded-lg mb-2 border cursor-pointer ${!wantTemplate ? 'border-seam bg-seam/10' : 'border-white/10 bg-paperDim/60'}`}>
               <div className="font-semibold text-sm">Start blank — I have my own plan</div>
             </div>
             <button className={`${btnGold} w-full mt-3`} onClick={finish} disabled={busy}>

@@ -3,7 +3,7 @@
   "short_name": "AthleteOS",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121C17",
-  "theme_color": "#121C17",
+  "background_color": "#0A0F0C",
+  "theme_color": "#0A0F0C",
   "icons": []
 }

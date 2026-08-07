@@ -153,11 +153,11 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
     <>
       {/* the "athlete card" — a bit of visual fun instead of a plain settings list */}
       <Card className="!p-0 overflow-hidden">
-        <div className="bg-ink px-5 pt-6 pb-14 relative">
+        <div className="bg-bgElev2 px-5 pt-6 pb-14 relative">
           <div className="font-mono text-[9px] uppercase tracking-widest text-willow">Player card</div>
-          <div className="font-display text-2xl text-paper mt-1">{name}</div>
+          <div className="font-display text-2xl text-cream mt-1">{name}</div>
           {profile.username && <div className="font-mono text-xs text-willow">@{profile.username}</div>}
-          <div className="font-serif italic text-paper/60 text-sm">{profile.primary_role || 'all-rounder'}{profile.experience_years ? ` · ${profile.experience_years} yrs` : ''}{profile.is_coach ? ' · Coach' : ''}</div>
+          <div className="text-cream/60 text-sm">{profile.primary_role || 'all-rounder'}{profile.experience_years ? ` · ${profile.experience_years} yrs` : ''}{profile.is_coach ? ' · Coach' : ''}</div>
         </div>
         <div className="flex justify-center -mt-10">
           <div className="relative">
@@ -204,7 +204,7 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
             <input className={inputCls} value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} placeholder="What friends see" />
             <label className={labelCls}>Username</label>
             <input className={inputCls} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="lowercase, no spaces — how friends find you" />
-            {usernameError && <p className="text-seam text-xs font-mono mt-1">{usernameError}</p>}
+            {usernameError && <p className="text-alert text-xs font-mono mt-1">{usernameError}</p>}
             <label className={labelCls}>Bio</label>
             <textarea className={inputCls} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Off-spinner, Bengaluru club cricket, building the base for next season." />
             <label className={labelCls}>Instagram handle</label>
@@ -235,7 +235,7 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
         <Eyebrow>Invite friends</Eyebrow>
         <H2>{profile.points || 0} points</H2>
         <Sub>Share your link. Once someone you invite finishes setting up their account, you both get credit. Points are a tracked ledger for now — once paid plans launch, they'll convert into free subscription time.</Sub>
-        <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2.5">
+        <div className="flex items-center justify-between bg-paperDim rounded-lg px-3 py-2.5">
           <span className="font-mono text-sm text-ink">{profile.referral_code || '—'}</span>
           <button onClick={copyReferralLink} className="text-seam flex items-center gap-1 font-mono text-xs"><Copy size={14} /> Copy link</button>
         </div>
@@ -275,7 +275,7 @@ export default function Profile({ session, profile, setProfile, recentDays, rece
                 <span>{r.requester_email}</span>
                 <div className="flex gap-2">
                   <button onClick={() => onRespondFriend(r.id, true)} className="text-good"><Check size={16} /></button>
-                  <button onClick={() => onRespondFriend(r.id, false)} className="text-seam"><XIcon size={16} /></button>
+                  <button onClick={() => onRespondFriend(r.id, false)} className="text-alert"><XIcon size={16} /></button>
                 </div>
               </div>
             ))}

@@ -106,7 +106,7 @@ export default function Body({ session, dayLog, niggles, recentNiggles, updateDa
           <div key={x.id} className="py-2 border-b border-ink/10 last:border-0 text-sm font-serif">
             <div className="flex justify-between">
               <b>{x.body_area} — {x.severity}/10</b>
-              <span className="font-mono text-xs text-seam" onClick={() => remove(x.id)}>remove</span>
+              <span className="font-mono text-xs text-alert" onClick={() => remove(x.id)}>remove</span>
             </div>
             {x.description && <div>{x.description}</div>}
             {x.worse_after && <div className="font-mono text-xs text-inkMuted">worse after {x.worse_after}</div>}

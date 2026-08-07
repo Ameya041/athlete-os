@@ -15,7 +15,7 @@ export default function Cricket({ session, dayLog, cricket, matches, weekOvers, 
           <FlipTile value={prevWeekOvers} caption="Overs last week" />
         </div>
         {prevWeekOvers > 0 && weekOvers > prevWeekOvers * 1.5 && (
-          <p className="font-serif text-sm text-seam mt-3">
+          <p className="text-sm text-alert mt-3">
             Your bowling volume is up sharply on last week. Big jumps in workload are the strongest predictor of overuse injuries — worth easing the ramp.
           </p>
         )}
@@ -90,7 +90,7 @@ function PracticeForm({ session, dayLog, cricket, reload, showToast }) {
         <Eyebrow>Today&apos;s sessions</Eyebrow>
         {cricket.length === 0 ? <Empty>No sessions logged today.</Empty> : cricket.map((c) => (
           <div key={c.id} className="py-2 border-b border-ink/10 last:border-0 text-sm font-serif">
-            <div className="flex justify-between"><b>{c.session_type}</b><span className="font-mono text-xs text-seam" onClick={() => remove(c.id)}>remove</span></div>
+            <div className="flex justify-between"><b>{c.session_type}</b><span className="font-mono text-xs text-alert" onClick={() => remove(c.id)}>remove</span></div>
             {c.batting_notes && <div>Batting: {c.batting_notes}</div>}
             {c.bowling_notes && <div>Bowling: {c.bowling_notes}</div>}
             {c.fielding_notes && <div>Fielding: {c.fielding_notes}</div>}
@@ -163,7 +163,7 @@ function MatchForm({ dayLog, matches, reload, showToast }) {
           <div key={m.id} className="py-2 border-b border-ink/10 last:border-0 text-sm font-serif">
             <div className="flex justify-between">
               <b>vs {m.opponent || '?'} · {m.format}</b>
-              <span className="font-mono text-xs text-seam" onClick={() => remove(m.id)}>remove</span>
+              <span className="font-mono text-xs text-alert" onClick={() => remove(m.id)}>remove</span>
             </div>
             <div className="font-mono text-xs text-inkMuted mt-1">
               Bat: {m.runs ?? '–'}({m.balls ?? '–'}){sr(m) ? ` SR ${sr(m)}` : ''} {m.dismissal ? `· ${m.dismissal}` : ''}

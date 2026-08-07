@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export function Card({ children, className = '' }) {
   return (
-    <div className={`bg-paper text-ink rounded-b-xl rounded-tr-xl border border-white/10 p-5 mb-4 shadow-lg shadow-black/20 ${className}`}>
+    <div className={`bg-paper text-ink rounded-xl border border-white/8 p-5 mb-4 ${className}`}>
       {children}
     </div>
   );
@@ -12,13 +12,13 @@ export function Eyebrow({ children }) {
   return <span className="block font-mono text-[10px] uppercase tracking-wider text-seam mb-1.5">{children}</span>;
 }
 export function Empty({ children }) {
-  return <div className="text-inkMuted text-sm font-serif italic py-2">{children}</div>;
+  return <div className="text-inkMuted text-sm italic py-2">{children}</div>;
 }
 export function H2({ children }) {
-  return <h2 className="font-display font-bold text-3xl leading-none">{children}</h2>;
+  return <h2 className="font-display font-extrabold text-2xl leading-tight tracking-tight">{children}</h2>;
 }
 export function Sub({ children }) {
-  return <p className="font-serif italic text-inkMuted text-sm mb-2 mt-1">{children}</p>;
+  return <p className="text-inkMuted text-sm mb-2 mt-1 leading-relaxed">{children}</p>;
 }
 
 export function FlipTile({ value, caption, size = 'text-2xl' }) {
@@ -41,7 +41,7 @@ export function FlipTile({ value, caption, size = 'text-2xl' }) {
 }
 
 /* tiny dependency-free sparkline for trends */
-export function Sparkline({ points, height = 42, stroke = '#AE3529' }) {
+export function Sparkline({ points, height = 42, stroke = '#22C55E' }) {
   const vals = points.filter((p) => p != null && !isNaN(p));
   if (vals.length < 2) return <div className="text-inkMuted text-xs font-serif italic">Not enough data yet.</div>;
   const min = Math.min(...vals), max = Math.max(...vals);
@@ -62,11 +62,11 @@ export function Sparkline({ points, height = 42, stroke = '#AE3529' }) {
   );
 }
 
-export const inputCls = 'w-full bg-white border border-ink/15 rounded-lg px-3 py-2.5 text-ink text-base font-body';
+export const inputCls = 'w-full bg-paperDim border border-white/10 rounded-lg px-3 py-2.5 text-ink text-base font-body placeholder:text-muted2 focus:outline-none focus:border-seam/50';
 export const labelCls = 'block font-mono text-[10px] uppercase tracking-wide text-inkMuted mt-2.5 mb-1';
-export const btnCls = 'bg-seam text-paper font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
-export const btnSecondary = 'bg-transparent border border-ink/20 text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
-export const btnGold = 'bg-willow text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
+export const btnCls = 'bg-seam text-bg font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97] hover:bg-seamDim';
+export const btnSecondary = 'bg-transparent border border-white/15 text-ink font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97] hover:border-white/30';
+export const btnGold = 'bg-willow text-bg font-semibold rounded-lg py-3 px-4 text-base transition-transform active:scale-[0.97]';
 
 /* Free, built-in browser text-to-speech — no API key, no cost. Used for meditation cues and reading the AI coach review aloud. */
 export function speak(text, opts = {}) {

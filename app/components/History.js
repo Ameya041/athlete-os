@@ -3,7 +3,7 @@ import { Card, Eyebrow, Empty, H2, Sub, FlipTile, btnSecondary } from './ui';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import ShareCardButton from './ShareCard';
 
-const CHART_COLORS = { seam: '#AE3529', willow: '#C69A3E', good: '#4C7A54' };
+const CHART_COLORS = { seam: '#22C55E', willow: '#D4B25A', good: '#34D399' };
 
 function Trend({ data, dataKey, color, unit = '' }) {
   const clean = data.filter((d) => d[dataKey] != null);
@@ -11,11 +11,11 @@ function Trend({ data, dataKey, color, unit = '' }) {
   return (
     <ResponsiveContainer width="100%" height={140}>
       <LineChart data={data} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#20202015" vertical={false} />
-        <XAxis dataKey="label" tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7A6F5C' }} axisLine={false} tickLine={false} width={30} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#F1F4EF15" vertical={false} />
+        <XAxis dataKey="label" tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7C897B' }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fontSize: 9, fontFamily: 'JetBrains Mono', fill: '#7C897B' }} axisLine={false} tickLine={false} width={30} />
         <Tooltip
-          contentStyle={{ background: '#F4EFE1', border: '1px solid #20202020', borderRadius: 8, fontFamily: 'Inter', fontSize: 12 }}
+          contentStyle={{ background: '#171D15', border: '1px solid #F1F4EF1A', color: '#F1F4EF', borderRadius: 8, fontFamily: 'Inter', fontSize: 12 }}
           formatter={(v) => [`${v}${unit}`, '']} labelStyle={{ fontFamily: 'JetBrains Mono', fontSize: 10 }} />
         <Line type="monotone" dataKey={dataKey} stroke={color} strokeWidth={2} dot={{ r: 2 }} connectNulls />
       </LineChart>

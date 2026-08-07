@@ -4,24 +4,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        bg: "#10241C",
-        bgElev: "#17281F",
-        bgElev2: "#1E3126",
-        paper: "#F4EFE1",
-        paperDim: "#E8DFC5",
-        ink: "#202D26",
-        inkMuted: "#7A6F5C",
-        cream: "#F1ECDE",
-        muted: "#93A69B",
-        muted2: "#6C7D73",
-        seam: "#AE3529",
-        seamDim: "#7A241C",
-        willow: "#C69A3E",
-        good: "#4C7A54"
+        bg: "#0A0F0C",
+        bgElev: "#11160F",
+        bgElev2: "#171D15",
+        paper: "#12170F",
+        paperDim: "#1B221A",
+        ink: "#F1F4EF",
+        inkMuted: "#8B978A",
+        cream: "#F1F4EF",
+        muted: "#7C897B",
+        muted2: "#57625A",
+        seam: "#22C55E",
+        seamDim: "#16A34A",
+        alert: "#F0554A",
+        alertDim: "#C73E35",
+        willow: "#D4B25A",
+        good: "#22C55E"
       },
       fontFamily: {
-        display: ["'Big Shoulders Display'", "sans-serif"],
-        serif: ["'Source Serif 4'", "serif"],
+        display: ["'Inter'", "sans-serif"],
+        serif: ["'Inter'", "sans-serif"],
         body: ["'Inter'", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"]
       }
